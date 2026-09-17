@@ -167,6 +167,12 @@ export const CreateProjectSchema = z.object({
   active: z.boolean().optional().describe('Whether the project is active'),
   billable: z.boolean().optional().describe('Whether the project is billable'),
   color: z.string().optional().describe('Project color (hex, e.g. #FF0000)'),
+  is_private: z
+    .boolean()
+    .optional()
+    .describe(
+      "Whether the project is private. Toggl's help centre says everyone in the workspace has access to a public project and that project members can only be added to a private one — so pass true when access should be limited to the people added with toggl_add_project_user. Omitted, Toggl's own default applies, which its API documentation does not state.",
+    ),
 });
 
 export const UpdateProjectSchema = z.object({
@@ -188,6 +194,62 @@ export const DeleteProjectSchema = z.object({
     .describe(
       'What Toggl should do with the time entries logged against this project. "unassign" asks for them to be kept and detached from the project, "delete" asks for them to be removed with it. Omitted, this tool sends "unassign" — the non-destructive request. Toggl does not document the parameter\'s behaviour beyond those two values, so treat the outcome as a request, not a guarantee, and verify afterwards with toggl_report_detailed if the history matters.',
     ),
+});
+
+// ── Project members ─────────────────────────────────────────────────
+
+/** Toggl answers a longer `project_ids` list with a 400. */
+export const MAX_PROJECT_USER_FILTER_IDS = 200;
+
+export const ListWorkspaceUsersSchema = z.object({
+  workspace_id: z.number().int().positive().describe('Workspace ID'),
+  exclude_deleted: z
+    .boolean()
+    .optional()
+    .describe('Leave out deleted users. Toggl documents the filter but not its default.'),
+});
+
+export const ListProjectUsersSchema = z.object({
+  workspace_id: z.number().int().positive().describe('Workspace ID'),
+  project_ids: z
+    .array(z.number().int().positive())
+    .min(1)
+    .max(MAX_PROJECT_USER_FILTER_IDS)
+    .optional()
+    .describe(
+      'Only list the members of these projects (at most 200). Omitted, every project membership in the workspace is listed.',
+    ),
+  user_id: z
+    .number()
+    .int()
+    .positive()
+    .optional()
+    .describe(
+      'Toggl\'s description: "if passed returns only project users for this user\'s projects". The global user id, as returned by toggl_list_workspace_users.',
+    ),
+  with_group_members: z
+    .boolean()
+    .optional()
+    .describe('Toggl\'s description: "Include group members".'),
+});
+
+/**
+ * `POST /workspaces/{workspace_id}/project_users`. `rate`, `labor_cost` and
+ * their `*_change_mode` are left out on purpose: a rate applied to all data
+ * rewrites what tracked time is worth, which would make this tool not purely
+ * additive. See the package AGENTS.md.
+ */
+export const AddProjectUserSchema = z.object({
+  workspace_id: z.number().int().positive().describe('Workspace ID'),
+  project_id: z.number().int().positive().describe('Project ID'),
+  user_id: z
+    .number()
+    .int()
+    .positive()
+    .describe(
+      'Global user id of a workspace member — the `id` field of toggl_list_workspace_users.',
+    ),
+  manager: z.boolean().optional().describe('Make the user a manager of the project.'),
 });
 
 // ── Clients ─────────────────────────────────────────────────────────

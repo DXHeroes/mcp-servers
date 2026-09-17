@@ -1,6 +1,6 @@
 /**
- * Track API v9 endpoints — user, workspaces, time entries, projects, clients,
- * tags and tasks.
+ * Track API v9 endpoints — user, workspaces, time entries, projects and their
+ * members, clients, tags and tasks.
  *
  * Split out of `client.ts`, which keeps the Reports API v3 half and the public
  * surface. Every method here is the one it always was; `TogglClient` extends
@@ -199,6 +199,7 @@ export class TogglTrackClient extends TogglHttpClient {
     active?: boolean;
     billable?: boolean;
     color?: string;
+    is_private?: boolean;
   }): Promise<unknown> {
     const { workspace_id, ...body } = params;
     return this.track('POST', `/workspaces/${workspace_id}/projects`, undefined, body);
@@ -242,6 +243,41 @@ export class TogglTrackClient extends TogglHttpClient {
     return this.track('DELETE', `/workspaces/${workspace_id}/projects/${project_id}`, {
       teDeletionMode,
     });
+  }
+
+  // ── Project members ─────────────────────────────────────────────────
+
+  async listWorkspaceUsers(params: {
+    workspace_id: number;
+    exclude_deleted?: boolean;
+  }): Promise<unknown> {
+    const { workspace_id, exclude_deleted } = params;
+    return this.track('GET', `/workspaces/${workspace_id}/users`, { exclude_deleted });
+  }
+
+  /** Toggl takes `project_ids` as one comma-separated query value. */
+  async listProjectUsers(params: {
+    workspace_id: number;
+    project_ids?: number[];
+    user_id?: number;
+    with_group_members?: boolean;
+  }): Promise<unknown> {
+    const { workspace_id, project_ids, user_id, with_group_members } = params;
+    return this.track('GET', `/workspaces/${workspace_id}/project_users`, {
+      project_ids: project_ids?.join(','),
+      user_id,
+      with_group_members,
+    });
+  }
+
+  async addProjectUser(params: {
+    workspace_id: number;
+    project_id: number;
+    user_id: number;
+    manager?: boolean;
+  }): Promise<unknown> {
+    const { workspace_id, ...body } = params;
+    return this.track('POST', `/workspaces/${workspace_id}/project_users`, undefined, body);
   }
 
   // ── Clients ─────────────────────────────────────────────────────────

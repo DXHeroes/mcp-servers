@@ -17,7 +17,7 @@ const counts = {
   'gemini-deep-research': 2,
   merk: 23,
   postgres: 2,
-  toggl: 34,
+  toggl: 37,
 };
 const receipt = { id, eras: [] };
 for (const era of process.env.MCP_SMOKE_STDIO_ONLY ? [] : ['legacy', 'auto']) {

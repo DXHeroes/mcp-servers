@@ -78,6 +78,7 @@ const ENTITY_REFERENCE_PATTERNS = {
   project: /\bproject_ids?\b|\bpid\b|\bprojects?\b/,
   workspace: /\bworkspace_ids?\b|\bwid\b|\bworkspaces?\b/,
   task: /\btask_ids?\b|\btid\b|\btasks?\b/,
+  user: /\buser_ids?\b|\buid\b|\busers?\b/,
 } as const;
 
 function referencesEntity(
@@ -151,6 +152,7 @@ export function buildErrorHint(
   const isTimeEntryPath = !isReportPath && path.includes('/time_entries');
   const isClientPath = /\/clients(\/|$|\/\d+)/.test(path);
   const isClientArchivePath = /\/clients\/\d+\/(archive|restore)$/.test(path);
+  const isProjectUserPath = /\/project_users(\/|$)/.test(path);
   const assignsTask = context.taskReference === 'assign';
   const clearsTask = context.taskReference === 'clear';
 
@@ -214,6 +216,14 @@ export function buildErrorHint(
     // parameter checks that the failing endpoint actually has it.
     if (isReportPath && haystack.includes('grouping')) {
       return `Reports v3 rejects this grouping. Toggl publishes no allowed set for \`grouping\`/\`sub_grouping\` and does not accept every pairing of the two; values known to work are ${quoted(KNOWN_REPORT_GROUPINGS)} for \`grouping\` and ${quoted(KNOWN_REPORT_SUB_GROUPINGS)} for \`sub_grouping\`. Retry without \`sub_grouping\`, or use \`toggl_report_detailed\` and group the returned entries yourself.`;
+    }
+    // Before the project branch: "Project user already exists" names a
+    // project, but looking up a project_id is not what it asks for.
+    if (isProjectUserPath && haystack.includes('already exists')) {
+      return 'The user is already a member of this project, so there is nothing to add. Confirm with `toggl_list_project_users` filtered by `project_ids`.';
+    }
+    if (isProjectUserPath && referencesEntity(haystack, 'user')) {
+      return 'Use `toggl_list_workspace_users` to look up a valid `user_id` (its `id` field). Only members of this workspace can be added to a project; a person outside it has to be invited by a workspace admin in Toggl first, which no tool here can do.';
     }
     if (isClientPath && haystack.includes('status')) {
       return `Valid \`status\` values are ${quoted(CLIENT_STATUS_VALUES)}.`;

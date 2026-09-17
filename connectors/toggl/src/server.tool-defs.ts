@@ -1,5 +1,5 @@
 /**
- * Tool definitions for the Toggl MCP server — the 34 tools, their input
+ * Tool definitions for the Toggl MCP server — the 37 tools, their input
  * schemas, their MCP behaviour hints and the client call behind each one.
  *
  * Split out of `server.ts`: the catalogue is a body of description and policy
@@ -12,6 +12,7 @@ import type { ToolAnnotations } from '@dxheroes/mcp-kit';
 import type { z } from 'zod';
 import type { TogglClient } from './client.js';
 import {
+  AddProjectUserSchema,
   ClientIdSchema,
   CreateClientSchema,
   CreateProjectSchema,
@@ -25,8 +26,10 @@ import {
   GetProjectSchema,
   ListClientsSchema,
   ListProjectsSchema,
+  ListProjectUsersSchema,
   ListTasksSchema,
   ListTimeEntriesSchema,
+  ListWorkspaceUsersSchema,
   MeSchema,
   ReportDetailedSchema,
   ReportProjectSummarySchema,
@@ -46,10 +49,11 @@ import {
 /**
  * MCP behaviour hints attached to every tool.
  *
- * The connector host classifies tools *only* by `annotations.readOnlyHint`
- * (`packages/kit/src/utils/tool-classification.ts`) and derives the
- * ALLOW / NEEDS_APPROVAL / BLOCKED defaults from that. With no annotations all
- * 34 tools land in the write group — the 16 read-only ones included — and an
+ * The connector host sorts tools into read-only, write and destructive tiers
+ * by `readOnlyHint` and `destructiveHint`
+ * (`packages/kit/src/utils/tool-classification.ts`) and gives each tier its
+ * own ALLOW / NEEDS_APPROVAL / BLOCKED setting. With no annotations all 37
+ * tools land in the write group — the 18 read-only ones included — and an
  * operator has no way to say "allow the listings, ask before the deletes".
  *
  * This package deliberately restricts nothing itself; these hints are what
@@ -70,7 +74,7 @@ const READ_ONLY_TOOL: ToolAnnotations = {
  * it was wrong for the update family, which overwrites values Toggl does not
  * keep a history of. The whole update family carries `DESTRUCTIVE_TOOL`
  * instead; what is left here is the genuinely additive set (the creates,
- * `toggl_stop_time_entry`, `toggl_restore_client`).
+ * `toggl_add_project_user`, `toggl_stop_time_entry`, `toggl_restore_client`).
  */
 const WRITE_TOOL: ToolAnnotations = {
   readOnlyHint: false,
@@ -211,7 +215,8 @@ export function buildTogglToolDefs(c: TogglClient): ToolDef[] {
     },
     {
       name: 'toggl_create_project',
-      description: 'Create a new project in a workspace.',
+      description:
+        "Create a new project in a workspace. Pass is_private: true when only chosen people should see and track time on it, then add them with toggl_add_project_user; Toggl's help centre says everyone in the workspace has access to a public project. Omitted, Toggl applies its own default, which its API documentation does not state.",
       inputSchema: CreateProjectSchema,
       annotations: WRITE_TOOL,
       handler: (args) => c.createProject(args as z.infer<typeof CreateProjectSchema>),
@@ -232,6 +237,32 @@ export function buildTogglToolDefs(c: TogglClient): ToolDef[] {
       inputSchema: DeleteProjectSchema,
       annotations: DESTRUCTIVE_TOOL,
       handler: (args) => c.deleteProject(args as z.infer<typeof DeleteProjectSchema>),
+    },
+
+    // ── Project members ───────────────────────────────────────────
+    {
+      name: 'toggl_list_workspace_users',
+      description:
+        'List the users of a workspace with their global user id, email, fullname and role, plus is_active (has joined the workspace) and inactive (deactivated). That id is the user_id toggl_add_project_user and toggl_list_project_users take. Only people listed here can be added to a project: someone outside the workspace has to be invited by a workspace admin in Toggl first, and no tool here sends invitations.',
+      inputSchema: ListWorkspaceUsersSchema,
+      annotations: READ_ONLY_TOOL,
+      handler: (args) => c.listWorkspaceUsers(args as z.infer<typeof ListWorkspaceUsersSchema>),
+    },
+    {
+      name: 'toggl_list_project_users',
+      description:
+        'List project memberships in a workspace: which user_id belongs to which project_id, and whether that user manages the project. Filter with project_ids (up to 200) or user_id — without a filter every membership in the workspace comes back. Names are not included; resolve user_id with toggl_list_workspace_users. Check here before toggl_add_project_user, because Toggl rejects adding someone who is already a member.',
+      inputSchema: ListProjectUsersSchema,
+      annotations: READ_ONLY_TOOL,
+      handler: (args) => c.listProjectUsers(args as z.infer<typeof ListProjectUsersSchema>),
+    },
+    {
+      name: 'toggl_add_project_user',
+      description:
+        'Add a workspace member to a project, optionally as its manager. Purely additive: it grants access and changes nothing already tracked. user_id must belong to a member of this workspace (toggl_list_workspace_users); a person outside the workspace cannot be added this way and has to be invited by a workspace admin in Toggl first. Toggl\'s help centre says members can only be added to a private project, so create the project with is_private: true. Adding someone who is already a member is answered with a 400 ("Project user already exists"). Hourly rate and labour cost are deliberately not parameters: Toggl can apply a changed rate to time already tracked.',
+      inputSchema: AddProjectUserSchema,
+      annotations: WRITE_TOOL,
+      handler: (args) => c.addProjectUser(args as z.infer<typeof AddProjectUserSchema>),
     },
 
     // ── Clients ───────────────────────────────────────────────────

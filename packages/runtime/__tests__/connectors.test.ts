@@ -12,7 +12,7 @@ const connectors = [
   ['gemini-deep-research', 2, 'synthetic-fixture'],
   ['merk', 23, 'synthetic-fixture'],
   ['postgres', 2, 'postgresql://fixture:synthetic@127.0.0.1/fixture?sslmode=disable'],
-  ['toggl', 34, 'synthetic-fixture'],
+  ['toggl', 37, 'synthetic-fixture'],
 ] as const;
 for (const [id, count, credential] of connectors) {
   it(`${id} exposes the exact connector surface and handles actual HTTP calls in both eras`, async () => {
