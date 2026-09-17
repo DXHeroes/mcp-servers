@@ -37,7 +37,8 @@ export function checkNativeReleaseWorkflow(workflow) {
   requireIn(build, 'type=sbom,generator=', 'native build must attach a pinned SBOM');
   if (build.includes('id-token: write'))
     failures.push('native build must not request signing identity');
-  requireIn(publish, 'needs: build', 'final publication must wait for both native builds');
+  if (!/needs: (?:build|\[[^\]\n]*\bbuild\b[^\]\n]*\])/.test(publish))
+    failures.push('final publication must wait for both native builds');
   requireIn(
     publish,
     'actions/download-artifact@',

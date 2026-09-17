@@ -1,0 +1,16 @@
+{
+  "name": "mcp-servers",
+  "owner": {
+    "name": "DX Heroes",
+    "email": "prokop.simek@dxheroes.io"
+  },
+  "description": "Skills for creating, reviewing, packaging, and deploying MCP servers safely.",
+  "plugins": [
+    {
+      "name": "mcp-servers",
+      "source": "./plugin",
+      "description": "Create an independent MCP server, add an existing server, or prepare a reviewed deployment and catalog entry.",
+      "category": "development"
+    }
+  ]
+}

@@ -1,11 +1,13 @@
 # Release process
 
-The repository has one release version. `package.json`, workspace package versions, connector
-metadata, catalog fixtures and the independent CRM template must match. `pnpm check:versions`
-enforces that rule. Create only a `v<package-version>` tag after the public tree and history pass
-review; the workflow refuses a mismatched tag.
+Every connector and deployable support package has its own version. Connector package metadata and
+its catalog fixture must match that connector's package version; the CRM template's package and
+catalog entry match each other. `pnpm check:versions` enforces those local contracts without tying
+them to the repository or plugin version.
 
-The tag workflow first runs the full public check. A matrix then publishes:
+After review, create `<component>-v<package-version>`, for example `postgres-v0.1.2` or
+`catalog-v0.1.3`. The workflow rejects a tag that does not match the selected package and publishes
+only that component's image:
 
 - `ghcr.io/dxheroes/mcp-abra-flexi`
 - `ghcr.io/dxheroes/mcp-byzdata`
@@ -17,7 +19,7 @@ The tag workflow first runs the full public check. A matrix then publishes:
 - `ghcr.io/dxheroes/mcp-catalog`
 - `ghcr.io/dxheroes/mcp-bundle`
 
-Every image is built from the same tagged checkout in two native jobs: linux/amd64 on
+The selected image is built from the tagged checkout in two native jobs: linux/amd64 on
 `ubuntu-24.04` and linux/arm64 on `ubuntu-24.04-arm`. There is no QEMU step. Each job pushes an
 immutable digest subject without version tags and uploads an image/architecture/version-specific
 receipt bound to the source revision. The merge job requires both distinct platform receipts from
@@ -38,8 +40,8 @@ and cosign 3.1.3. Native build and final publication jobs receive `packages: wri
 publication receives `id-token: write` for signing. Validation and pull-request jobs are read-only.
 Checkout credential persistence is disabled.
 
-This requires 18 native build jobs and nine merge/scan/sign jobs, plus validation. Native arm64
-runner availability and queue capacity are release prerequisites. GitHub supports the selected
+Each component release requires two native build jobs and one merge/scan/sign job, plus validation.
+Native arm64 runner availability and queue capacity are release prerequisites. GitHub supports the selected
 [standard runner labels in public and private repositories](https://docs.github.com/en/actions/reference/runners/github-hosted-runners);
 private repositories use their own Actions minute allowance and billing. The independent CRM
 template uses the same two-build/one-merge pattern.

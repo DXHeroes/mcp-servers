@@ -36,15 +36,9 @@ for (const [name, workflow] of [
     failures.push(`${name} workflow must disable checkout credential persistence`);
 }
 
-const matrixEntries = [...release.matchAll(/- id: ([a-z-]+)\n\s+image: (\S+)/g)];
-if (matrixEntries.length !== expectedImages.length * 2)
-  failures.push('release must contain exactly nine build targets and nine final images');
 for (const image of expectedImages) {
-  const matches = matrixEntries.filter(
-    ([, id, name]) => id === image && name === `ghcr.io/dxheroes/mcp-${image}`,
-  );
-  if (matches.length !== 2)
-    failures.push(`release build and merge matrices must each contain ${image}`);
+  if (!release.includes(`'${image}-v*'`))
+    failures.push(`release must accept the independent ${image} version tag`);
 }
 for (const platform of ['linux/amd64', 'linux/arm64']) {
   if (!release.includes(platform)) failures.push(`release scan is missing ${platform}`);
@@ -104,6 +98,9 @@ for (const file of [
   'docs/releasing.md',
   'skills/mcp-server-create/SKILL.md',
   'skills/mcp-server-add/SKILL.md',
+  'skills/mcp-server-deploy/SKILL.md',
+  '.claude-plugin/marketplace.json',
+  'plugin/.claude-plugin/plugin.json',
 ]) {
   if (!(await stat(new URL(file, root))).isFile()) failures.push(`missing release asset ${file}`);
 }
@@ -113,6 +110,6 @@ if (failures.length > 0) {
   process.exitCode = 1;
 } else {
   console.log(
-    'Release assets, workflow pins, image matrix and independent template boundaries verified',
+    'Release assets, workflow pins, independent image tags and template boundaries verified',
   );
 }

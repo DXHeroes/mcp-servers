@@ -1,0 +1,11 @@
+{
+  "name": "mcp-servers",
+  "version": "0.1.0",
+  "description": "Create, add, and deploy independently versioned MCP servers with reviewed security boundaries.",
+  "author": {
+    "name": "DX Heroes",
+    "email": "prokop.simek@dxheroes.io"
+  },
+  "license": "Apache-2.0",
+  "keywords": ["mcp", "server", "deployment", "catalog"]
+}
