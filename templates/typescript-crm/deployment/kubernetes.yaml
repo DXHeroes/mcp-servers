@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mcp-crm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mcp-crm
+  template:
+    metadata:
+      labels:
+        app: mcp-crm
+    spec:
+      securityContext:
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+        fsGroupChangePolicy: OnRootMismatch
+      imagePullSecrets:
+        - name: ghcr-pull
+      containers:
+        - name: mcp-crm
+          image: ghcr.io/example/mcp-crm@sha256:0000000000000000000000000000000000000000000000000000000000000000
+          env:
+            - name: MCP_ALLOWED_HOSTS
+              value: crm.connectors.example.com
+            - name: MCP_ALLOWED_ORIGINS
+              value: https://gateway.example.com
+            - name: MCP_ACCESS_TOKEN_FILE
+              value: /run/secrets/access-token
+          ports:
+            - name: http
+              containerPort: 8080
+          readinessProbe:
+            tcpSocket:
+              port: http
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+          volumeMounts:
+            - name: access-token
+              mountPath: /run/secrets
+              readOnly: true
+      volumes:
+        - name: access-token
+          secret:
+            secretName: mcp-crm-access-token
+            defaultMode: 0440
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mcp-crm
+spec:
+  selector:
+    app: mcp-crm
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http

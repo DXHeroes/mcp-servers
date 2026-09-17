@@ -1,0 +1,138 @@
+{
+  "schemaVersion": 1,
+  "servers": [
+    {
+      "id": "abra-flexi",
+      "name": "Abra Flexi",
+      "description": "Invoices, contacts, products, and accounting via the Abra Flexi REST API.",
+      "version": "0.1.0",
+      "endpoint": {
+        "transport": "streamable-http",
+        "url": "https://abra-flexi.connectors.example.com/mcp"
+      },
+      "auth": {
+        "type": "api_key",
+        "credentialModes": ["shared", "per_user"],
+        "defaultCredentialMode": "shared",
+        "credentialDelivery": "connector_base64url",
+        "credentialLabel": "Server URL and credentials",
+        "apiKeyHint": "Format: https://server/c/company|username:password (e.g., \"https://demo.flexibee.eu/c/demo|admin:admin\"). The URL must include /c/company-name."
+      },
+      "docsUrl": "https://podpora.flexibee.eu/en/collections/2592813-dokumentacia-rest-api",
+      "author": "DX Heroes"
+    },
+    {
+      "id": "byzdata",
+      "name": "ByzData",
+      "description": "Czech business registry MCP — search companies, check health, insolvency, relations, documents from ARES, Justice.cz, and ISIR. 9 tools for comprehensive Czech company data analysis.",
+      "version": "0.1.0",
+      "endpoint": {
+        "transport": "streamable-http",
+        "url": "https://byzdata.connectors.example.com/mcp"
+      },
+      "auth": {
+        "type": "none",
+        "credentialModes": ["shared"],
+        "defaultCredentialMode": "shared"
+      },
+      "author": "DX Heroes"
+    },
+    {
+      "id": "fakturoid",
+      "name": "Fakturoid",
+      "description": "Invoicing, contacts, expenses, and accounting via the Fakturoid API v3.",
+      "version": "0.1.0",
+      "endpoint": {
+        "transport": "streamable-http",
+        "url": "https://fakturoid.connectors.example.com/mcp"
+      },
+      "auth": {
+        "type": "api_key",
+        "credentialModes": ["shared", "per_user"],
+        "defaultCredentialMode": "shared",
+        "credentialDelivery": "connector_base64url",
+        "credentialLabel": "Client credentials",
+        "apiKeyHint": "Format: slug:client_id:client_secret. Get your OAuth Client Credentials at Settings > User Account (Nastavení > Uživatelský účet) in your Fakturoid account. The slug is your account URL (e.g., \"mycompany\" from mycompany.fakturoid.cz)."
+      },
+      "docsUrl": "https://www.fakturoid.cz/api/v3",
+      "author": "DX Heroes"
+    },
+    {
+      "id": "gemini-deep-research",
+      "name": "Gemini Deep Research",
+      "description": "Conducts comprehensive AI-powered research using Google's Deep Research Agent. Autonomously searches the web, reads multiple sources, and synthesizes findings into detailed, cited reports. Tasks take 5-20 minutes. Cost: ~$2-5 per research.",
+      "version": "0.1.0",
+      "endpoint": {
+        "transport": "streamable-http",
+        "url": "https://gemini.connectors.example.com/mcp"
+      },
+      "auth": {
+        "type": "api_key",
+        "credentialModes": ["shared", "per_user"],
+        "defaultCredentialMode": "shared",
+        "credentialDelivery": "connector_base64url",
+        "apiKeyHint": "Get your API key at https://aistudio.google.com/apikey"
+      },
+      "docsUrl": "https://ai.google.dev/gemini-api/docs/deep-research",
+      "author": "DX Heroes"
+    },
+    {
+      "id": "merk",
+      "name": "Merk",
+      "description": "Czech and Slovak company data — financials, relations, employees, fleet, and more.",
+      "version": "0.1.0",
+      "endpoint": {
+        "transport": "streamable-http",
+        "url": "https://merk.connectors.example.com/mcp"
+      },
+      "auth": {
+        "type": "api_key",
+        "credentialModes": ["shared", "per_user"],
+        "defaultCredentialMode": "shared",
+        "credentialDelivery": "connector_base64url",
+        "apiKeyHint": "Get your API key at https://www.merk.cz/api/about/"
+      },
+      "docsUrl": "https://api.merk.cz/docs/",
+      "author": "DX Heroes"
+    },
+    {
+      "id": "postgres",
+      "name": "PostgreSQL",
+      "description": "Run SQL against a PostgreSQL database. A read-only tool that PostgreSQL itself refuses to let write, and a destructive one for changes; the connection details stay in the connector host and never reach the model.",
+      "version": "0.1.0",
+      "endpoint": {
+        "transport": "streamable-http",
+        "url": "https://postgres.connectors.example.com/mcp"
+      },
+      "auth": {
+        "type": "api_key",
+        "credentialModes": ["shared", "per_user"],
+        "defaultCredentialMode": "shared",
+        "credentialDelivery": "connector_base64url",
+        "credentialLabel": "Connection string",
+        "apiKeyHint": "Two accepted forms. (1) URL: postgresql://user:password@host:5432/dbname?sslmode=require (postgres:// works too). (2) Keyword form, fields separated by spaces or semicolons: host=db.example.com port=5432 dbname=mydb user=myuser password=secret sslmode=require. Required: host, dbname, user. Defaults: port=5432 and sslmode=prefer. What prefer does, exactly: it attempts an encrypted connection and drops to an unencrypted one only if the server itself reports that it has no TLS support — but it verifies no certificate, so it is not protection against someone who can intercept the connection (they can force the unencrypted fallback). Use sslmode=require to refuse an unencrypted connection, and verify-full to also verify the certificate the server presents. Accepted sslmode: disable, allow, prefer, require, verify-ca, verify-full (allow behaves like prefer here; it tries TLS first). For a database whose certificate comes from a private or internal CA, add sslrootcert=<PEM certificate(s), base64url-encoded> (a bundle of several concatenated certificates is fine) and sslmode=verify-full; without it, verify-ca/verify-full trust only the system CA store. Note: the database host is part of this credential, so with per-user credentials each user chooses their own database server."
+      },
+      "docsUrl": "https://www.postgresql.org/docs/current/libpq-connect.html",
+      "author": "DX Heroes"
+    },
+    {
+      "id": "toggl",
+      "name": "Toggl Track",
+      "description": "Time tracking via the Toggl Track API: start and stop timers, log and correct time entries, manage projects, tasks, clients and tags, and run summary, detailed and weekly reports. Tasks and client archiving require a paid Toggl plan; deletions are permanent, so the delete tools are annotated as destructive for per-profile approval.",
+      "version": "0.1.0",
+      "endpoint": {
+        "transport": "streamable-http",
+        "url": "https://toggl.connectors.example.com/mcp"
+      },
+      "auth": {
+        "type": "api_key",
+        "credentialModes": ["shared", "per_user"],
+        "defaultCredentialMode": "shared",
+        "credentialDelivery": "connector_base64url",
+        "apiKeyHint": "Get your API token at https://track.toggl.com/profile (scroll to \"API Token\")"
+      },
+      "docsUrl": "https://engineering.toggl.com/docs/api/",
+      "author": "DX Heroes"
+    }
+  ]
+}

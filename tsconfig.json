@@ -1,0 +1,59 @@
+{
+  "files": [],
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitReturns": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    "baseUrl": ".",
+    "paths": {
+      "@dxheroes/mcp-kit": ["./packages/kit/src/index.ts"]
+    }
+  },
+  "references": [
+    {
+      "path": "./packages/kit"
+    },
+    {
+      "path": "./connectors/abra-flexi"
+    },
+    {
+      "path": "./connectors/byzdata"
+    },
+    {
+      "path": "./connectors/fakturoid"
+    },
+    {
+      "path": "./connectors/gemini-deep-research"
+    },
+    {
+      "path": "./connectors/merk"
+    },
+    {
+      "path": "./connectors/postgres"
+    },
+    {
+      "path": "./connectors/toggl"
+    },
+    {
+      "path": "./packages/runtime"
+    },
+    {
+      "path": "./packages/catalog"
+    },
+    {
+      "path": "./packages/bundle"
+    }
+  ]
+}

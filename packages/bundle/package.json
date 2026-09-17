@@ -1,0 +1,43 @@
+{
+  "name": "@dxheroes/mcp-bundle",
+  "version": "0.1.0",
+  "type": "module",
+  "license": "MIT",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./express": "./dist/express.js"
+  },
+  "files": [
+    "dist",
+    "LICENSE",
+    "schema",
+    "fixtures"
+  ],
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "build": "tsc --build",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit -p tsconfig.test.json"
+  },
+  "dependencies": {
+    "@dxheroes/mcp-runtime": "workspace:*",
+    "@dxheroes/mcp-catalog": "workspace:*",
+    "@modelcontextprotocol/client": "2.0.0",
+    "@modelcontextprotocol/server": "2.0.0",
+    "@modelcontextprotocol/node": "2.0.0",
+    "express": "5.2.1"
+  },
+  "devDependencies": {
+    "@types/express": "5.0.6"
+  },
+  "bin": {
+    "mcp-bundle": "./dist/cli.js"
+  }
+}

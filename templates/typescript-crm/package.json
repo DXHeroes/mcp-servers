@@ -1,0 +1,31 @@
+{
+  "name": "mcp-crm-template",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Independent TypeScript CRM MCP server template",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "check:file-secret": "node scripts/check-file-secret.mjs",
+    "start": "node dist/server.js",
+    "test": "node --import=tsx --test src/crm.test.ts",
+    "validate": "node scripts/validate.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/node": "2.0.0",
+    "@modelcontextprotocol/server": "2.0.0"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/client": "2.0.0",
+    "@types/node": "26.4.0",
+    "tsx": "4.21.0",
+    "typescript": "5.9.3"
+  },
+  "overrides": {
+    "esbuild": "0.28.1"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "abra-flexi": "https://abra-flexi.connectors.example.com/mcp",
+  "byzdata": "https://byzdata.connectors.example.com/mcp",
+  "fakturoid": "https://fakturoid.connectors.example.com/mcp",
+  "gemini-deep-research": "https://gemini.connectors.example.com/mcp",
+  "merk": "https://merk.connectors.example.com/mcp",
+  "postgres": "https://postgres.connectors.example.com/mcp",
+  "toggl": "https://toggl.connectors.example.com/mcp"
+}

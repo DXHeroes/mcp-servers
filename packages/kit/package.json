@@ -1,0 +1,37 @@
+{
+  "name": "@dxheroes/mcp-kit",
+  "version": "0.1.0",
+  "description": "Minimal shared authoring primitives for DX Heroes MCP connectors",
+  "type": "module",
+  "license": "Elastic-2.0",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "LICENSE",
+    "NOTICE"
+  ],
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "build": "tsc --build",
+    "test": "vitest run",
+    "lint": "biome check src __tests__",
+    "typecheck": "tsc --noEmit -p tsconfig.test.json"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DXHeroes/mcp-servers.git",
+    "directory": "packages/kit"
+  },
+  "dependencies": {
+    "zod": "4.4.3"
+  }
+}

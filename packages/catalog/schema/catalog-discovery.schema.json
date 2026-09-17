@@ -1,0 +1,457 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "type": "number",
+      "const": 1
+    },
+    "servers": {
+      "maxItems": 500,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "pattern": "^[a-zA-Z0-9._-]+$"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4000
+          },
+          "version": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "endpoint": {
+            "type": "object",
+            "properties": {
+              "transport": {
+                "type": "string",
+                "const": "streamable-http"
+              },
+              "url": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2048
+              }
+            },
+            "required": [
+              "transport",
+              "url"
+            ],
+            "additionalProperties": false
+          },
+          "auth": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "none"
+                  },
+                  "credentialModes": {
+                    "minItems": 1,
+                    "maxItems": 2,
+                    "type": "array",
+                    "items": {
+                      "const": "shared"
+                    },
+                    "uniqueItems": true
+                  },
+                  "defaultCredentialMode": {
+                    "type": "string",
+                    "enum": [
+                      "shared",
+                      "per_user"
+                    ]
+                  }
+                },
+                "required": [
+                  "type",
+                  "credentialModes"
+                ],
+                "additionalProperties": false,
+                "allOf": [
+                  {
+                    "if": {
+                      "properties": {
+                        "defaultCredentialMode": {
+                          "const": "shared"
+                        }
+                      },
+                      "required": [
+                        "defaultCredentialMode"
+                      ]
+                    },
+                    "then": {
+                      "properties": {
+                        "credentialModes": {
+                          "contains": {
+                            "const": "shared"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "if": {
+                      "properties": {
+                        "defaultCredentialMode": {
+                          "const": "per_user"
+                        }
+                      },
+                      "required": [
+                        "defaultCredentialMode"
+                      ]
+                    },
+                    "then": {
+                      "properties": {
+                        "credentialModes": {
+                          "contains": {
+                            "const": "per_user"
+                          }
+                        }
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "api_key"
+                  },
+                  "credentialModes": {
+                    "minItems": 1,
+                    "maxItems": 2,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "shared",
+                        "per_user"
+                      ]
+                    },
+                    "uniqueItems": true
+                  },
+                  "defaultCredentialMode": {
+                    "type": "string",
+                    "enum": [
+                      "shared",
+                      "per_user"
+                    ]
+                  },
+                  "credentialDelivery": {
+                    "type": "string",
+                    "enum": [
+                      "header",
+                      "connector_base64url"
+                    ],
+                    "description": "header (default): substitute the raw key using apiKeyDefaults. connector_base64url: runtime owns X-MCP-Upstream-Credential, encoding the original UTF-8 credential as unpadded base64url; this never changes stored credential values."
+                  },
+                  "apiKeyDefaults": {
+                    "type": "object",
+                    "properties": {
+                      "headerName": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 100,
+                        "pattern": "^[!#$%&'*+.^_`|~0-9A-Za-z-]+$",
+                        "not": {
+                          "pattern": "^(?:[hH][oO][sS][tT]|[cC][oO][oO][kK][iI][eE]|[cC][oO][nN][nN][eE][cC][tT][iI][oO][nN]|[cC][oO][nN][tT][eE][nN][tT]-[lL][eE][nN][gG][tT][hH]|[tT][rR][aA][nN][sS][fF][eE][rR]-[eE][nN][cC][oO][dD][iI][nN][gG]|[pP][rR][oO][xX][yY]-.*)$"
+                        }
+                      },
+                      "headerValueTemplate": {
+                        "type": "string",
+                        "maxLength": 200,
+                        "pattern": "^[A-Za-z0-9 ._-]*\\{apiKey\\}$"
+                      }
+                    },
+                    "required": [
+                      "headerName",
+                      "headerValueTemplate"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "credentialLabel": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100
+                  },
+                  "apiKeyHint": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 4096
+                  }
+                },
+                "required": [
+                  "type",
+                  "credentialModes"
+                ],
+                "additionalProperties": false,
+                "allOf": [
+                  {
+                    "if": {
+                      "properties": {
+                        "defaultCredentialMode": {
+                          "const": "shared"
+                        }
+                      },
+                      "required": [
+                        "defaultCredentialMode"
+                      ]
+                    },
+                    "then": {
+                      "properties": {
+                        "credentialModes": {
+                          "contains": {
+                            "const": "shared"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "if": {
+                      "properties": {
+                        "defaultCredentialMode": {
+                          "const": "per_user"
+                        }
+                      },
+                      "required": [
+                        "defaultCredentialMode"
+                      ]
+                    },
+                    "then": {
+                      "properties": {
+                        "credentialModes": {
+                          "contains": {
+                            "const": "per_user"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "if": {
+                      "properties": {
+                        "credentialDelivery": {
+                          "const": "connector_base64url"
+                        }
+                      },
+                      "required": [
+                        "credentialDelivery"
+                      ]
+                    },
+                    "then": {
+                      "properties": {
+                        "apiKeyDefaults": {
+                          "properties": {
+                            "headerName": {
+                              "const": "X-MCP-Upstream-Credential"
+                            },
+                            "headerValueTemplate": {
+                              "const": "{apiKey}"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "else": {
+                      "required": [
+                        "apiKeyDefaults"
+                      ]
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "oauth"
+                  },
+                  "credentialModes": {
+                    "minItems": 1,
+                    "maxItems": 2,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "shared",
+                        "per_user"
+                      ]
+                    },
+                    "uniqueItems": true
+                  },
+                  "defaultCredentialMode": {
+                    "type": "string",
+                    "enum": [
+                      "shared",
+                      "per_user"
+                    ]
+                  },
+                  "oauthDefaults": {
+                    "type": "object",
+                    "properties": {
+                      "authorizationServerUrl": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 2048
+                      },
+                      "authorizationEndpoint": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 2048
+                      },
+                      "tokenEndpoint": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 2048
+                      },
+                      "scopes": {
+                        "maxItems": 100,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 256
+                        }
+                      },
+                      "resource": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 2048
+                      },
+                      "authorizeParams": {
+                        "type": "object",
+                        "properties": {
+                          "access_type": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 100
+                          },
+                          "prompt": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 100
+                          },
+                          "audience": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 2048
+                          }
+                        },
+                        "additionalProperties": false
+                      },
+                      "noMetadata": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "authorizationServerUrl",
+                      "authorizationEndpoint",
+                      "tokenEndpoint",
+                      "scopes"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "type",
+                  "credentialModes"
+                ],
+                "additionalProperties": false,
+                "allOf": [
+                  {
+                    "if": {
+                      "properties": {
+                        "defaultCredentialMode": {
+                          "const": "shared"
+                        }
+                      },
+                      "required": [
+                        "defaultCredentialMode"
+                      ]
+                    },
+                    "then": {
+                      "properties": {
+                        "credentialModes": {
+                          "contains": {
+                            "const": "shared"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "if": {
+                      "properties": {
+                        "defaultCredentialMode": {
+                          "const": "per_user"
+                        }
+                      },
+                      "required": [
+                        "defaultCredentialMode"
+                      ]
+                    },
+                    "then": {
+                      "properties": {
+                        "credentialModes": {
+                          "contains": {
+                            "const": "per_user"
+                          }
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "docsUrl": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          },
+          "author": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "description",
+          "version",
+          "endpoint",
+          "auth"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "servers"
+  ],
+  "additionalProperties": false,
+  "$id": "https://local-mcp-gateway.dev/schemas/catalog-discovery-v1.json",
+  "description": "Catalog discovery v1. In addition to JSON Schema, reject duplicate servers[].id, credential-bearing or malformed URLs, and documents exceeding 2097152 UTF-8 bytes. Every outbound URL must pass the gateway network policy before publication. Metadata is never executable code."
+}

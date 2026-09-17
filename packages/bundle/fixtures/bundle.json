@@ -1,0 +1,204 @@
+{
+  "catalog": {
+    "schemaVersion": 1,
+    "servers": [
+      {
+        "id": "typescript",
+        "name": "typescript",
+        "description": "Prepared trusted bundle example",
+        "version": "0.1.0",
+        "endpoint": {
+          "transport": "streamable-http",
+          "url": "http://localhost:8080/mcp/typescript"
+        },
+        "auth": {
+          "type": "api_key",
+          "credentialDelivery": "connector_base64url",
+          "credentialModes": ["shared", "per_user"]
+        }
+      },
+      {
+        "id": "python",
+        "name": "python",
+        "description": "Prepared trusted bundle example",
+        "version": "0.1.0",
+        "endpoint": {
+          "transport": "streamable-http",
+          "url": "http://localhost:8080/mcp/python"
+        },
+        "auth": {
+          "type": "api_key",
+          "credentialDelivery": "connector_base64url",
+          "credentialModes": ["shared", "per_user"]
+        }
+      },
+      {
+        "id": "express",
+        "name": "express",
+        "description": "Prepared trusted bundle example",
+        "version": "0.1.0",
+        "endpoint": {
+          "transport": "streamable-http",
+          "url": "http://localhost:8080/mcp/express"
+        },
+        "auth": {
+          "type": "api_key",
+          "credentialDelivery": "connector_base64url",
+          "credentialModes": ["shared", "per_user"]
+        }
+      },
+      {
+        "id": "byzdata",
+        "name": "byzdata",
+        "description": "Prepared trusted bundle example",
+        "version": "0.1.0",
+        "endpoint": {
+          "transport": "streamable-http",
+          "url": "http://localhost:8080/mcp/byzdata"
+        },
+        "auth": {
+          "type": "none",
+          "credentialModes": ["shared"]
+        }
+      },
+      {
+        "id": "typescript-stdio",
+        "name": "typescript-stdio",
+        "description": "Prepared trusted bundle example",
+        "version": "0.1.0",
+        "endpoint": {
+          "transport": "streamable-http",
+          "url": "http://localhost:8080/mcp/typescript-stdio"
+        },
+        "auth": {
+          "type": "api_key",
+          "credentialDelivery": "connector_base64url",
+          "credentialModes": ["shared", "per_user"]
+        }
+      },
+      {
+        "id": "python-stdio",
+        "name": "python-stdio",
+        "description": "Prepared trusted bundle example",
+        "version": "0.1.0",
+        "endpoint": {
+          "transport": "streamable-http",
+          "url": "http://localhost:8080/mcp/python-stdio"
+        },
+        "auth": {
+          "type": "api_key",
+          "credentialDelivery": "connector_base64url",
+          "credentialModes": ["shared", "per_user"]
+        }
+      },
+      {
+        "id": "postgres",
+        "name": "PostgreSQL",
+        "description": "Prepared PostgreSQL connector",
+        "version": "0.1.0",
+        "endpoint": {
+          "transport": "streamable-http",
+          "url": "http://localhost:8080/mcp/postgres"
+        },
+        "auth": {
+          "type": "api_key",
+          "credentialDelivery": "connector_base64url",
+          "credentialModes": ["shared", "per_user"]
+        }
+      }
+    ]
+  },
+  "services": [
+    {
+      "id": "typescript",
+      "transport": "http",
+      "argv": ["/usr/local/bin/node", "/app/dist/fixture.js"],
+      "cwd": "/app",
+      "env": {
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONUNBUFFERED": "1"
+      },
+      "maxActive": 8,
+      "port": 8101,
+      "requestCredentials": "connector_base64url"
+    },
+    {
+      "id": "python",
+      "transport": "http",
+      "argv": ["/opt/venvs/python-fixture/bin/python", "/app/fixtures/python.py"],
+      "cwd": "/app",
+      "env": {
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONUNBUFFERED": "1"
+      },
+      "maxActive": 8,
+      "port": 8102,
+      "requestCredentials": "connector_base64url"
+    },
+    {
+      "id": "express",
+      "transport": "http",
+      "argv": ["/usr/local/bin/node", "/app/fixtures/express.mjs"],
+      "cwd": "/app",
+      "env": {
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONUNBUFFERED": "1"
+      },
+      "maxActive": 8,
+      "port": 8103,
+      "requestCredentials": "connector_base64url"
+    },
+    {
+      "id": "byzdata",
+      "transport": "http",
+      "argv": ["/usr/local/bin/node", "/opt/connectors/byzdata/dist/cli.js", "--http"],
+      "cwd": "/app",
+      "env": {
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONUNBUFFERED": "1"
+      },
+      "maxActive": 8,
+      "port": 8104,
+      "childToken": {
+        "env": "BYZDATA_SERVICE_TOKEN"
+      }
+    },
+    {
+      "id": "typescript-stdio",
+      "transport": "stdio",
+      "argv": ["/usr/local/bin/node", "/app/dist/fixture.js", "--stdio"],
+      "cwd": "/app",
+      "env": {
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONUNBUFFERED": "1"
+      },
+      "maxActive": 8,
+      "requestCredentials": "connector_base64url"
+    },
+    {
+      "id": "python-stdio",
+      "transport": "stdio",
+      "argv": ["/opt/venvs/python-fixture/bin/python", "/app/fixtures/python.py", "--stdio"],
+      "cwd": "/app",
+      "env": {
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONUNBUFFERED": "1"
+      },
+      "maxActive": 8,
+      "requestCredentials": "connector_base64url"
+    },
+    {
+      "id": "postgres",
+      "transport": "http",
+      "argv": ["/usr/local/bin/node", "/opt/connectors/postgres/dist/cli.js", "--http"],
+      "cwd": "/app",
+      "env": {},
+      "port": 8105,
+      "maxActive": 8,
+      "requestCredentials": "connector_base64url",
+      "childToken": {
+        "env": "POSTGRES_SERVICE_TOKEN"
+      }
+    }
+  ]
+}

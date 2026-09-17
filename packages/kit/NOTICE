@@ -1,0 +1,7 @@
+This package contains modified portions of Local MCP Gateway by DX Heroes CZ s.r.o.
+
+The extracted type modules omit gateway-only configuration, authentication,
+transport, discovery, organization, profile, and database contracts. The public
+barrel is intentionally limited to connector authoring primitives.
+
+Additional Elastic-2.0 normalization helpers derived from tool-schema.ts and tool-result-normalization.ts in Local MCP Gateway; comments adapted for standalone use.

@@ -1,0 +1,57 @@
+{
+  "name": "@dxheroes/mcp-byzdata",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Czech business registry MCP - ARES, Justice.cz, ISIR data",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "LICENSE"
+  ],
+  "mcpPackage": true,
+  "scripts": {
+    "build": "tsc --build",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "biome check src __tests__",
+    "typecheck": "tsc --noEmit -p tsconfig.test.json",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "mcp",
+    "czech",
+    "business",
+    "registry",
+    "ares",
+    "mcp-connector"
+  ],
+  "author": "DX Heroes",
+  "license": "MIT",
+  "dependencies": {
+    "cheerio": "1.2.0",
+    "zod": "4.4.3",
+    "@dxheroes/mcp-kit": "workspace:*",
+    "@dxheroes/mcp-runtime": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3",
+    "vitest": "4.1.11"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DXHeroes/mcp-servers.git",
+    "directory": "connectors/byzdata"
+  },
+  "bin": {
+    "mcp-byzdata": "./dist/cli.js"
+  }
+}

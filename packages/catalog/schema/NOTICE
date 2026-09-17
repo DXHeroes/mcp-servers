@@ -1,0 +1,6 @@
+Catalog discovery v1 JSON Schema is a frozen interoperable artifact from Local MCP Gateway
+by DX Heroes CZ s.r.o., retained under Elastic License 2.0. Its canonical identifier is
+https://local-mcp-gateway.dev/schemas/catalog-discovery-v1.json.
+
+The JSON file is preserved byte-for-byte. Runtime-only URL, duplicate-ID, and document-size
+validation supplement it. fixtures/catalog.v1.json is the producer/consumer contract fixture.
