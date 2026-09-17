@@ -5,6 +5,19 @@ service, and an optional trusted polyglot bundle. The normal deployment is one c
 server. The bundle is for administrator-reviewed projects that deliberately share one container
 security boundary.
 
+## Claude marketplace
+
+Install the public marketplace and its `create`, `add`, and `deploy` skills:
+
+```sh
+claude plugin marketplace add DXHeroes/mcp-servers
+claude plugin install mcp-servers@mcp-servers
+```
+
+The skills run read-only preflight checks and produce an exact plan before any publication,
+deployment, catalog registration, restart, or secret change. Those operations require explicit
+administrator approval of the concrete plan.
+
 MCP is a wire protocol, not a TypeScript-only framework. These images include servers built with
 the official TypeScript SDK, the official Python SDK, and a plain Express implementation of MCP.
 An ordinary REST API is not MCP; import its OpenAPI description in Local MCP Gateway instead.
@@ -101,15 +114,17 @@ reviewed revision. Checkout credentials must stay outside the Docker context, la
 image. Runtime Git/npm/pip installs are prohibited. Native modules, wheels and virtualenvs must be
 built for the final OS, libc, architecture, interpreter and absolute path.
 
-The portable [mcp-server-create](skills/mcp-server-create/SKILL.md) and
-[mcp-server-add](skills/mcp-server-add/SKILL.md) skills require an explicit immutable public-kit
-checkout and never assume this workspace is next to the skill installation.
+The portable [mcp-server-create](skills/mcp-server-create/SKILL.md),
+[mcp-server-add](skills/mcp-server-add/SKILL.md), and
+[mcp-server-deploy](skills/mcp-server-deploy/SKILL.md) skills require an explicit immutable
+public-kit checkout and never assume this workspace is next to the skill installation.
 
 ## Releases and security
 
 Pull-request CI runs version/schema/fixture checks, the independent template, lint, typecheck,
-tests, builds, and every container target. Version tags build linux/amd64 and linux/arm64 images
-with pinned actions, QEMU, BuildKit, SBOM generator, Trivy and cosign. Both platform variants must
+tests, builds, and every container target. Component tags such as `postgres-v0.1.2` build only that
+independently versioned linux/amd64 and linux/arm64 image on native runners with pinned actions,
+BuildKit, SBOM generator, Trivy and cosign. Both platform variants must
 pass the vulnerability gate; the signed multi-platform index includes both variants and their
 SBOM/provenance attestations. See [docs/releasing.md](docs/releasing.md).
 
@@ -118,7 +133,7 @@ the repository's private security-reporting channel rather than a public issue.
 
 ## License
 
-This is a mixed-license repository. Connectors, runtime, bundle, templates, skills and newly
-authored build plumbing are MIT. The extracted and modified connector kit and frozen catalog schema
-retain Elastic License 2.0. See [LICENSES.md](LICENSES.md); do not treat the repository as a single
-MIT work.
+This is a mixed-license repository. Connectors, runtime, bundle, templates, documentation, and
+newly authored build plumbing are MIT. The marketplace and skills are Apache-2.0. The extracted and
+modified connector kit and frozen catalog schema retain Elastic License 2.0. See
+[LICENSES.md](LICENSES.md); do not treat the repository as a single-license work.

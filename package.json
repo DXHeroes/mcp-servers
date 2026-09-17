@@ -17,12 +17,14 @@
     "format": "biome format --write .",
     "format:check": "biome format .",
     "check:versions": "node scripts/check-versions.mjs",
-    "check:release-assets": "node scripts/check-release-assets.mjs && node --test scripts/native-release-policy.test.mjs",
+    "check:release-assets": "node scripts/check-release-assets.mjs && node scripts/sync-plugin-skills.mjs --check && node --test scripts/native-release-policy.test.mjs scripts/plugin-marketplace.test.mjs scripts/independent-versioning.test.mjs",
     "check:external-server": "node --test scripts/validate-external-server.test.mjs",
     "check:template": "npm --prefix templates/typescript-crm ci --ignore-scripts && npm --prefix templates/typescript-crm test && npm --prefix templates/typescript-crm run build",
     "check:template-context": "node scripts/check-template-context.mjs",
     "check": "pnpm check:versions && pnpm check:contract && pnpm check:release-assets && pnpm check:template && pnpm lint && pnpm typecheck && pnpm test && pnpm build && pnpm check:external-server",
-    "check:contract": "node scripts/check-contract.mjs"
+    "check:contract": "node scripts/check-contract.mjs",
+    "plugin:sync": "node scripts/sync-plugin-skills.mjs",
+    "plugin:check": "node scripts/sync-plugin-skills.mjs --check"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.11",

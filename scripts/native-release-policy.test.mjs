@@ -31,7 +31,10 @@ for (const file of [
     ],
     ['missing provenance', (s) => s.replace('type=provenance,mode=max', '')],
     ['missing SBOM', (s) => s.replace('type=sbom,generator=', 'type=other,generator=')],
-    ['missing merge dependency', (s) => s.replace('needs: build', 'needs: validate')],
+    [
+      'missing merge dependency',
+      (s) => s.replace(/needs: (?:build|\[validate, build\])/, 'needs: validate'),
+    ],
     ['missing merge sources', (s) => s.replace(` "\${sources[@]}"`, '')],
     [
       'missing receipt validation',
