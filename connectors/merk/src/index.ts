@@ -14,7 +14,7 @@ export const mcpPackage: McpPackage = {
     name: 'Merk',
     description:
       'Czech and Slovak company data — financials, relations, employees, fleet, and more.',
-    version: '0.1.0',
+    version: '0.1.1',
     author: 'DX Heroes',
     license: 'MIT',
     requiresApiKey: true,

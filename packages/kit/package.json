@@ -1,6 +1,6 @@
 {
   "name": "@dxheroes/mcp-kit",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Minimal shared authoring primitives for DX Heroes MCP connectors",
   "type": "module",
   "license": "Elastic-2.0",

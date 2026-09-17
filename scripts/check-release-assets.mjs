@@ -1,5 +1,6 @@
 import { readFile, stat } from 'node:fs/promises';
 import { missingRecursiveIgnores } from './docker-context-policy.mjs';
+import { checkNativeReleaseWorkflow } from './native-release-policy.mjs';
 
 const root = new URL('../', import.meta.url);
 const expectedImages = [
@@ -35,9 +36,15 @@ for (const [name, workflow] of [
     failures.push(`${name} workflow must disable checkout credential persistence`);
 }
 
+const matrixEntries = [...release.matchAll(/- id: ([a-z-]+)\n\s+image: (\S+)/g)];
+if (matrixEntries.length !== expectedImages.length * 2)
+  failures.push('release must contain exactly nine build targets and nine final images');
 for (const image of expectedImages) {
-  if (!release.includes(`- id: ${image}`))
-    failures.push(`release image matrix is missing ${image}`);
+  const matches = matrixEntries.filter(
+    ([, id, name]) => id === image && name === `ghcr.io/dxheroes/mcp-${image}`,
+  );
+  if (matches.length !== 2)
+    failures.push(`release build and merge matrices must each contain ${image}`);
 }
 for (const platform of ['linux/amd64', 'linux/arm64']) {
   if (!release.includes(platform)) failures.push(`release scan is missing ${platform}`);
@@ -47,10 +54,21 @@ for (const required of [
   'cosign-release: v3.1.3',
   'version: v0.37.1',
   'moby/buildkit:v0.33.0@sha256:6c2fa84a6b61ccd72899dde4239f8d5717f05f9a8ca6f3cad185fb1a95a94de3',
-  'tonistiigi/binfmt@sha256:400a4873b838d1b89194d982c45e5fb3cda4593fbfd7e08a02e76b03b21166f0',
   'docker/buildkit-syft-scanner:1.12.0@sha256:ae4f3b554449e7e25548e7d8ccc029d17357348e30c6e3df01b92bc93654d6a9',
 ]) {
-  if (!release.includes(required)) failures.push(`release workflow is missing pin: ${required}`);
+  for (const [name, workflow] of [
+    ['release', release],
+    ['CRM template', templateWorkflow],
+  ]) {
+    if (!workflow.includes(required)) failures.push(`${name} workflow is missing pin: ${required}`);
+  }
+}
+
+for (const [name, workflow] of [
+  ['release', release],
+  ['CRM template', templateWorkflow],
+]) {
+  for (const failure of checkNativeReleaseWorkflow(workflow)) failures.push(`${name}: ${failure}`);
 }
 
 const templatePackage = JSON.parse(await read('templates/typescript-crm/package.json'));

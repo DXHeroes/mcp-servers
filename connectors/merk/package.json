@@ -1,6 +1,6 @@
 {
   "name": "@dxheroes/mcp-merk",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "MCP server for Merk API \u2014 Czech and Slovak company data, financials, relations, employees, fleet, and more",
   "type": "module",

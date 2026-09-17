@@ -1,6 +1,6 @@
 {
   "name": "@dxheroes/mcp-servers",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "Source workspace for DX Heroes MCP connectors and their shared connector kit",
   "type": "module",
@@ -17,7 +17,7 @@
     "format": "biome format --write .",
     "format:check": "biome format .",
     "check:versions": "node scripts/check-versions.mjs",
-    "check:release-assets": "node scripts/check-release-assets.mjs",
+    "check:release-assets": "node scripts/check-release-assets.mjs && node --test scripts/native-release-policy.test.mjs",
     "check:external-server": "node --test scripts/validate-external-server.test.mjs",
     "check:template": "npm --prefix templates/typescript-crm ci --ignore-scripts && npm --prefix templates/typescript-crm test && npm --prefix templates/typescript-crm run build",
     "check:template-context": "node scripts/check-template-context.mjs",

@@ -45,8 +45,8 @@ policy for that destructive tool.
 
 ## Supply chain
 
-Release images use immutable base indexes and fully pinned GitHub Actions, QEMU, BuildKit, SBOM
-generator, Trivy and cosign versions. Each linux/amd64 and linux/arm64 variant gets SBOM and SLSA
+Release images use native runners, immutable base indexes, and fully pinned GitHub Actions,
+BuildKit, SBOM generator, Trivy and cosign versions. Each linux/amd64 and linux/arm64 variant gets SBOM and SLSA
 provenance attestations and a vulnerability report. The release gate fails on any reported
 vulnerability; reports are retained without ignore lists. A keyless signature covers the immutable
 multi-platform index digest, which binds both platform manifests and their attestations.

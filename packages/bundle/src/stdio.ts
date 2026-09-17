@@ -103,14 +103,14 @@ export async function serveStdioRequest(
   const handler = createMcpHandler(
     async () => {
       const server = new Server(
-        { name: `bundle-${service.id}`, version: '0.1.0' },
+        { name: `bundle-${service.id}`, version: '0.1.1' },
         { capabilities: { tools: {}, resources: {}, prompts: {} } },
       );
       const connect = async () => {
         if (res.destroyed) throw new Error('request_closed');
         if (!client) {
           transport = new ProcessTransport(service, credential);
-          client = new Client({ name: 'bundle-stdio', version: '0.1.0' });
+          client = new Client({ name: 'bundle-stdio', version: '0.1.1' });
           await client.connect(transport, { timeout: 10000 });
         }
         return client;

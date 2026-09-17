@@ -5,7 +5,7 @@
       "id": "abra-flexi",
       "name": "Abra Flexi",
       "description": "Invoices, contacts, products, and accounting via the Abra Flexi REST API.",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "endpoint": {
         "transport": "streamable-http",
         "url": "https://abra-flexi.connectors.example.com/mcp"
@@ -25,7 +25,7 @@
       "id": "byzdata",
       "name": "ByzData",
       "description": "Czech business registry MCP — search companies, check health, insolvency, relations, documents from ARES, Justice.cz, and ISIR. 9 tools for comprehensive Czech company data analysis.",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "endpoint": {
         "transport": "streamable-http",
         "url": "https://byzdata.connectors.example.com/mcp"
@@ -41,7 +41,7 @@
       "id": "fakturoid",
       "name": "Fakturoid",
       "description": "Invoicing, contacts, expenses, and accounting via the Fakturoid API v3.",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "endpoint": {
         "transport": "streamable-http",
         "url": "https://fakturoid.connectors.example.com/mcp"
@@ -61,7 +61,7 @@
       "id": "gemini-deep-research",
       "name": "Gemini Deep Research",
       "description": "Conducts comprehensive AI-powered research using Google's Deep Research Agent. Autonomously searches the web, reads multiple sources, and synthesizes findings into detailed, cited reports. Tasks take 5-20 minutes. Cost: ~$2-5 per research.",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "endpoint": {
         "transport": "streamable-http",
         "url": "https://gemini.connectors.example.com/mcp"
@@ -80,7 +80,7 @@
       "id": "merk",
       "name": "Merk",
       "description": "Czech and Slovak company data — financials, relations, employees, fleet, and more.",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "endpoint": {
         "transport": "streamable-http",
         "url": "https://merk.connectors.example.com/mcp"
@@ -99,7 +99,7 @@
       "id": "postgres",
       "name": "PostgreSQL",
       "description": "Run SQL against a PostgreSQL database. A read-only tool that PostgreSQL itself refuses to let write, and a destructive one for changes; the connection details stay in the connector host and never reach the model.",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "endpoint": {
         "transport": "streamable-http",
         "url": "https://postgres.connectors.example.com/mcp"
@@ -119,7 +119,7 @@
       "id": "toggl",
       "name": "Toggl Track",
       "description": "Time tracking via the Toggl Track API: start and stop timers, log and correct time entries, manage projects, tasks, clients and tags, and run summary, detailed and weekly reports. Tasks and client archiving require a paid Toggl plan; deletions are permanent, so the delete tools are annotated as destructive for per-profile approval.",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "endpoint": {
         "transport": "streamable-http",
         "url": "https://toggl.connectors.example.com/mcp"

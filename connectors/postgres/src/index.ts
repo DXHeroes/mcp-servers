@@ -7,7 +7,7 @@ export const mcpPackage: McpPackage = {
     name: 'PostgreSQL',
     description:
       'Run SQL against a PostgreSQL database. A read-only tool that PostgreSQL itself refuses to let write, and a destructive one for changes; the connection details stay in the connector host and never reach the model.',
-    version: '0.1.0',
+    version: '0.1.1',
     author: 'DX Heroes',
     license: 'MIT',
     // Each connector instance requires its own PostgreSQL connection credential.

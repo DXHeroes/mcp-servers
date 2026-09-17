@@ -1,6 +1,6 @@
 {
   "name": "@dxheroes/mcp-byzdata",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "Czech business registry MCP - ARES, Justice.cz, ISIR data",
   "type": "module",

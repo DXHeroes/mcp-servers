@@ -2,7 +2,7 @@
   "id": "crm",
   "name": "CRM",
   "description": "Example independently authored CRM connector.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "endpoint": {
     "transport": "streamable-http",
     "url": "https://crm.connectors.example.com/mcp"

@@ -1,6 +1,6 @@
 {
   "name": "@dxheroes/mcp-catalog",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "license": "(MIT AND Elastic-2.0)",
   "main": "./dist/index.js",

@@ -6,7 +6,7 @@
         "id": "typescript",
         "name": "typescript",
         "description": "Prepared trusted bundle example",
-        "version": "0.1.0",
+        "version": "0.1.1",
         "endpoint": {
           "transport": "streamable-http",
           "url": "http://localhost:8080/mcp/typescript"
@@ -21,7 +21,7 @@
         "id": "python",
         "name": "python",
         "description": "Prepared trusted bundle example",
-        "version": "0.1.0",
+        "version": "0.1.1",
         "endpoint": {
           "transport": "streamable-http",
           "url": "http://localhost:8080/mcp/python"
@@ -36,7 +36,7 @@
         "id": "express",
         "name": "express",
         "description": "Prepared trusted bundle example",
-        "version": "0.1.0",
+        "version": "0.1.1",
         "endpoint": {
           "transport": "streamable-http",
           "url": "http://localhost:8080/mcp/express"
@@ -51,7 +51,7 @@
         "id": "byzdata",
         "name": "byzdata",
         "description": "Prepared trusted bundle example",
-        "version": "0.1.0",
+        "version": "0.1.1",
         "endpoint": {
           "transport": "streamable-http",
           "url": "http://localhost:8080/mcp/byzdata"
@@ -65,7 +65,7 @@
         "id": "typescript-stdio",
         "name": "typescript-stdio",
         "description": "Prepared trusted bundle example",
-        "version": "0.1.0",
+        "version": "0.1.1",
         "endpoint": {
           "transport": "streamable-http",
           "url": "http://localhost:8080/mcp/typescript-stdio"
@@ -80,7 +80,7 @@
         "id": "python-stdio",
         "name": "python-stdio",
         "description": "Prepared trusted bundle example",
-        "version": "0.1.0",
+        "version": "0.1.1",
         "endpoint": {
           "transport": "streamable-http",
           "url": "http://localhost:8080/mcp/python-stdio"
@@ -95,7 +95,7 @@
         "id": "postgres",
         "name": "PostgreSQL",
         "description": "Prepared PostgreSQL connector",
-        "version": "0.1.0",
+        "version": "0.1.1",
         "endpoint": {
           "transport": "streamable-http",
           "url": "http://localhost:8080/mcp/postgres"

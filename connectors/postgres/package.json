@@ -1,6 +1,6 @@
 {
   "name": "@dxheroes/mcp-postgres",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "MCP server that runs SQL against a PostgreSQL database \u2014 one destructive tool",
   "type": "module",

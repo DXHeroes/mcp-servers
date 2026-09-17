@@ -40,11 +40,21 @@ docker run --rm --read-only --user 12345:12345 --cap-drop ALL \
   mcp-crm:local
 ```
 
-The repository workflow builds linux/amd64 and linux/arm64, pushes only on `v*` tags, records the
-digest, creates pinned SBOM/provenance attestations, scans both platform manifests, and signs the
-digest keylessly. Its checkout, build actions, QEMU/BuildKit images, scanner, SBOM generator, and
-cosign version are immutable pins. `GITHUB_TOKEN` is used only in the release job with
-`packages: write` and `id-token: write`; no registry password enters the Docker context.
+The repository workflow builds linux/amd64 on `ubuntu-24.04` and linux/arm64 on
+`ubuntu-24.04-arm`, and pushes only on `v*` tags. Both native build jobs publish immutable digest
+subjects with pinned SBOM/provenance attestations; neither assigns version tags. A final job
+validates the two architecture receipts against the checkout revision, merges their full indexes,
+checks that both platforms retain attestations, scans both final platform manifests at all
+severities, and signs the final index digest keylessly. The merge result owns the version tag.
+Pull requests and main-branch checks never publish.
+
+Its checkout, build actions, BuildKit image, scanner, SBOM generator, and cosign version are
+immutable pins. `GITHUB_TOKEN` has `packages: write` only in native build and final release jobs;
+`id-token: write` is limited to the final signing job. No registry password enters the Docker
+context. These [native runner labels support public and private repositories](https://docs.github.com/en/actions/reference/runners/github-hosted-runners);
+private repositories consume their own Actions allowance and billing. Allow capacity for two
+native build jobs plus one merge/scan/sign job, including arm64 runner availability. Preserve a
+failed published tag and increment the patch version instead of retargeting it.
 
 For a different private registry, replace the login step with repository secrets such as
 `REGISTRY_USERNAME` and `REGISTRY_TOKEN`. Pass them only to the login action. Do not copy `.npmrc`,

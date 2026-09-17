@@ -16,7 +16,7 @@ export const mcpPackage: McpPackage = {
       'Czech business registry MCP — search companies, check health, insolvency, ' +
       'relations, documents from ARES, Justice.cz, and ISIR. 9 tools for comprehensive ' +
       'Czech company data analysis.',
-    version: '0.1.0',
+    version: '0.1.1',
     author: 'DX Heroes',
     license: 'MIT',
     requiresApiKey: false,

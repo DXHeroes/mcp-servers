@@ -13,7 +13,7 @@ export const mcpPackage: McpPackage = {
     id: 'fakturoid',
     name: 'Fakturoid',
     description: 'Invoicing, contacts, expenses, and accounting via the Fakturoid API v3.',
-    version: '0.1.0',
+    version: '0.1.1',
     author: 'DX Heroes',
     license: 'MIT',
     requiresApiKey: true,

@@ -15,7 +15,7 @@ export const mcpPackage: McpPackage = {
     name: 'Toggl Track',
     description:
       'Time tracking via the Toggl Track API: start and stop timers, log and correct time entries, manage projects, tasks, clients and tags, and run summary, detailed and weekly reports. Tasks and client archiving require a paid Toggl plan; deletions are permanent, so the delete tools are annotated as destructive for per-profile approval.',
-    version: '0.1.0',
+    version: '0.1.1',
     author: 'DX Heroes',
     license: 'MIT',
     requiresApiKey: true,
