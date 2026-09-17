@@ -22,12 +22,12 @@ describe('TogglMcpServer', () => {
     vi.clearAllMocks();
   });
   describe('listTools', () => {
-    it('should return 34 tools', async () => {
+    it('should return 37 tools', async () => {
       const server = new TogglMcpServer(apiKeyConfig);
       await server.initialize();
 
       const tools = await server.listTools();
-      expect(tools).toHaveLength(34);
+      expect(tools).toHaveLength(37);
     });
 
     it('should have correct tool names', async () => {
@@ -55,6 +55,11 @@ describe('TogglMcpServer', () => {
       expect(names).toContain('toggl_get_project');
       expect(names).toContain('toggl_create_project');
       expect(names).toContain('toggl_update_project');
+
+      // Project members
+      expect(names).toContain('toggl_list_workspace_users');
+      expect(names).toContain('toggl_list_project_users');
+      expect(names).toContain('toggl_add_project_user');
 
       // Clients
       expect(names).toContain('toggl_list_clients');
@@ -169,6 +174,8 @@ describe('TogglMcpServer', () => {
         'toggl_get_current_time_entry',
         'toggl_list_projects',
         'toggl_get_project',
+        'toggl_list_workspace_users',
+        'toggl_list_project_users',
         'toggl_list_clients',
         'toggl_get_client',
         'toggl_list_tags',
@@ -192,7 +199,7 @@ describe('TogglMcpServer', () => {
       const additiveWrites = tools.filter(
         (t) => t.annotations?.readOnlyHint === false && t.annotations?.destructiveHint === false,
       );
-      expect(additiveWrites.length).toBe(7);
+      expect(additiveWrites.length).toBe(8);
       expect(readOnlyCount + additiveWrites.length).toBe(tools.length - 11);
     });
 
@@ -208,7 +215,12 @@ describe('TogglMcpServer', () => {
 
     it('should not mark a purely additive write as destructive', async () => {
       const tools = await server.listTools();
-      for (const name of ['toggl_create_project', 'toggl_create_tag', 'toggl_restore_client']) {
+      for (const name of [
+        'toggl_create_project',
+        'toggl_create_tag',
+        'toggl_restore_client',
+        'toggl_add_project_user',
+      ]) {
         const tool = tools.find((t) => t.name === name);
         expect(tool?.annotations?.readOnlyHint, name).toBe(false);
         expect(tool?.annotations?.destructiveHint, name).toBe(false);

@@ -1,6 +1,7 @@
 # Toggl Track connector
 
-Time entries, projects, clients, tags, tasks and reports through Toggl Track API v9 and Reports v3.
+Time entries, projects and their members, clients, tags, tasks and reports through Toggl Track API
+v9 and Reports v3.
 
 ## Credential and deployment
 
@@ -26,6 +27,8 @@ No resources or prompts are exposed. Tools:
   `toggl_delete_time_entry`.
 - Projects: `toggl_list_projects`, `toggl_get_project`, `toggl_create_project`,
   `toggl_update_project`, `toggl_delete_project`.
+- Project members: `toggl_list_workspace_users`, `toggl_list_project_users`,
+  `toggl_add_project_user`.
 - Clients: `toggl_list_clients`, `toggl_get_client`, `toggl_create_client`,
   `toggl_update_client`, `toggl_archive_client`, `toggl_restore_client`,
   `toggl_delete_client`.
@@ -35,9 +38,21 @@ No resources or prompts are exposed. Tools:
 - Reports: `toggl_report_summary`, `toggl_report_detailed`, `toggl_report_weekly`,
   `toggl_report_project_summary`.
 
-Get/list/report tools are read-only. Create/start/stop/update/archive/restore tools mutate data.
-Deletes and overwrites are destructive; project deletion can also request deletion of associated
-time entries. Prefer project deactivation, task completion and client archive where supported.
+Get/list/report tools are read-only. Create/start/stop/update/archive/restore tools and
+`toggl_add_project_user` mutate data. Deletes and overwrites are destructive; project deletion can
+also request deletion of associated time entries. Prefer project deactivation, task completion and
+client archive where supported.
+
+`toggl_create_project` accepts `is_private`. Toggl's help centre says everyone in the workspace has
+access to a public project and that members can only be added to a private one, so create the
+project private before adding members. `toggl_add_project_user` is annotated as an additive write
+and takes only `project_id`, `user_id` (the global id from `toggl_list_workspace_users`) and
+`manager`; rate and labour cost are left out because Toggl can apply a changed rate to time already
+tracked. Only members of the workspace can be added; a person outside it must be invited by a
+workspace admin in Toggl first. Endpoints: `GET /workspaces/{workspace_id}/users`,
+`GET|POST /workspaces/{workspace_id}/project_users`
+([projects](https://engineering.toggl.com/docs/track/api/projects/),
+[workspaces](https://engineering.toggl.com/docs/track/api/workspaces/)).
 
 ## Limits and troubleshooting
 

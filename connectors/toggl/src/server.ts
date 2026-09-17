@@ -2,8 +2,8 @@
  * Toggl Track MCP Server
  *
  * Wraps the Toggl Track API (v9) and Reports API (v3).
- * Provides 34 tools covering time entries, projects, tasks, clients, tags, workspaces,
- * and reports.
+ * Provides 37 tools covering time entries, projects and their members, tasks, clients,
+ * tags, workspaces, and reports.
  *
  * The tool catalogue itself lives in `./server.tool-defs.js`.
  */
