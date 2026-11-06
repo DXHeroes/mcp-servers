@@ -34,6 +34,7 @@ An ordinary REST API is not MCP; import its OpenAPI description in Local MCP Gat
 | PostgreSQL | `ghcr.io/dxheroes/mcp-postgres` | Bounded read and explicit write SQL tools |
 | Toggl Track | `ghcr.io/dxheroes/mcp-toggl` | Time tracking and reports |
 | Google Tasks | Local build; first release pending | Per-user OAuth task lists and tasks at `/tasks/mcp` |
+| Google Contacts / Directory | Local build; first release pending | Contact read/write at `/contacts/mcp`, Workspace-only search at `/directory/mcp` |
 | Outlook | Local build; first release pending | Personal/work mail at `/mail/mcp`, calendar at `/calendar/mcp` |
 | Microsoft Teams | Local build; first release pending | Work/school chats and channels at `/mcp` |
 | Slack | Local build; internal pilot only | Per-user Web API bridge; official MCP is the migration target |

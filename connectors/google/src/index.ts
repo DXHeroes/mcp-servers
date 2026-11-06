@@ -1,6 +1,7 @@
 /** Google service endpoints. The gateway owns per-user OAuth and credential storage. */
 import type { McpPackage } from '@dxheroes/mcp-kit';
 import type { ConnectorEndpoint } from '@dxheroes/mcp-runtime';
+import { GoogleContactsServer, GoogleDirectoryServer } from './contacts.js';
 import { GoogleTasksServer } from './tasks.js';
 export const mcpPackage: McpPackage = {
   metadata: {
@@ -30,8 +31,42 @@ export const tasksPackage: McpPackage = {
     },
   },
 };
+export const contactsPackage: McpPackage = {
+  ...tasksPackage,
+  metadata: {
+    ...tasksPackage.metadata,
+    id: 'google-contacts',
+    name: 'Google Contacts',
+    description: 'Contact search and full contact mutations for personal and Workspace accounts.',
+    docsUrl: 'https://developers.google.com/people/api/rest',
+    oauthDefaults: {
+      ...tasksPackage.metadata.oauthDefaults!,
+      scopes: ['https://www.googleapis.com/auth/contacts'],
+    },
+  },
+  createServer: (credential) => new GoogleContactsServer(credential),
+};
+export const directoryPackage: McpPackage = {
+  ...tasksPackage,
+  metadata: {
+    ...tasksPackage.metadata,
+    id: 'google-directory',
+    name: 'Google Workspace Directory',
+    description:
+      'Read-only domain directory search for Workspace accounts with administrator-enabled directory sharing. Personal accounts are not supported.',
+    docsUrl: 'https://developers.google.com/people/v1/directory',
+    oauthDefaults: {
+      ...tasksPackage.metadata.oauthDefaults!,
+      scopes: ['https://www.googleapis.com/auth/directory.readonly'],
+    },
+  },
+  createServer: (credential) => new GoogleDirectoryServer(credential),
+};
 export const endpoints: readonly ConnectorEndpoint[] = [
   { path: '/tasks/mcp', package: tasksPackage, auth: 'oauth' },
+  { path: '/contacts/mcp', package: contactsPackage, auth: 'oauth' },
+  { path: '/directory/mcp', package: directoryPackage, auth: 'oauth' },
 ];
+export { GoogleContactsServer, GoogleDirectoryServer } from './contacts.js';
 export { GoogleTasksServer } from './tasks.js';
 export default mcpPackage;

@@ -5,7 +5,7 @@ import {
   parseRetryAfterMs,
   RateLimitPacer,
   safeFetch,
-  withToolCallContext,
+  withToolCallDeadline,
 } from '@dxheroes/mcp-kit';
 import { UpstreamCredentialInvalidError } from '@dxheroes/mcp-runtime';
 
@@ -19,7 +19,10 @@ export class GoogleApiError extends Error {
 }
 
 export class GoogleClient {
-  constructor(private readonly accessToken: string) {
+  constructor(
+    private readonly accessToken: string,
+    private readonly service: 'tasks' | 'people' = 'tasks',
+  ) {
     if (
       !accessToken ||
       ![...accessToken].every((c) => c.charCodeAt(0) > 32 && c.charCodeAt(0) < 127)
@@ -33,13 +36,27 @@ export class GoogleClient {
     query: Record<string, unknown>,
     body?: unknown,
   ): Promise<Record<string, unknown>> {
-    const url = new URL(`https://tasks.googleapis.com/tasks/v1/${path}`);
+    const base =
+      this.service === 'people'
+        ? 'https://people.googleapis.com/v1/'
+        : 'https://tasks.googleapis.com/tasks/v1/';
+    const url = new URL(`${base}${path}`);
+    const origin = new URL(base);
+    if (
+      url.origin !== origin.origin ||
+      !url.pathname.startsWith(origin.pathname) ||
+      url.search ||
+      url.hash
+    )
+      throw new Error('Invalid Google API path');
     for (const [key, value] of Object.entries(query))
-      if (value !== undefined) url.searchParams.set(key, String(value));
-    const signal = callSignal(AbortSignal.timeout(20_000))!;
-    return withToolCallContext({ signal }, async () => {
+      if (value !== undefined)
+        for (const item of Array.isArray(value) ? value : [value])
+          url.searchParams.append(key, String(item));
+    return withToolCallDeadline(20_000, async () => {
+      const signal = callSignal()!;
       const pacer = new RateLimitPacer({
-        namespace: 'google-tasks',
+        namespace: `google-${this.service}`,
         maxAttempts: 3,
         retryStatuses: method === 'GET' ? [429, 500, 502, 503, 504] : [429],
         maxSingleWaitMs: 2000,
@@ -78,7 +95,12 @@ export class GoogleClient {
       if (!reader) return { success: true };
       const chunks: Uint8Array[] = [];
       let size = 0;
+      const cancel = () => {
+        void reader.cancel().catch(() => {});
+      };
       try {
+        signal.throwIfAborted();
+        signal.addEventListener('abort', cancel, { once: true });
         while (true) {
           signal.throwIfAborted();
           const part = await reader.read();
@@ -94,6 +116,7 @@ export class GoogleClient {
           throw new Error('Invalid Google response');
         return result as Record<string, unknown>;
       } finally {
+        signal.removeEventListener('abort', cancel);
         await reader.cancel().catch(() => {});
         reader.releaseLock();
       }
