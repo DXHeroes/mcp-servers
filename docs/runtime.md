@@ -90,3 +90,31 @@ temporarily and never installed in the images. No release or registry publicatio
 The optional [trusted polyglot bundle](bundle.md) supervises prepared Node/Python
 MCP projects and builtin CLIs behind the same discovery contract. Separate
 containers remain the default; bundled projects share one security boundary.
+
+## Service endpoints
+
+A package that serves several services can supply a static endpoint registry as the third
+argument of `createConnectorHttpServer(package, config, endpoints)`, or of
+`runConnectorCli(package, args, endpoints)`:
+
+```ts
+const endpoints = [
+  { path: '/tasks/mcp', package: tasksPackage, auth: 'oauth' as const },
+  { path: '/calendar/mcp', package: calendarPackage, auth: 'oauth' as const },
+];
+```
+
+Each route constructs its own package server with the current request's credential. Only
+registered paths are served; there is no implicit `/mcp` alias when a registry is supplied.
+Duplicate, ambiguous and reserved paths fail before the listener starts. Packages without a
+registry retain `/mcp` and their existing credential behavior. Registry CLIs require `--http`.
+
+An `auth: 'oauth'` route requires `X-MCP-Credential-Mode: per_user` and an explicit access token
+in `X-MCP-Upstream-Credential` (canonical unpadded base64url UTF-8). It never falls back to
+`MCP_UPSTREAM_CREDENTIAL`, even when that shared value is configured. Whitespace and non-ASCII
+bytes are refused in OAuth access tokens. The service bearer stays in `Authorization`; it is
+not the user's upstream access token. A connector does not perform OAuth code exchange or
+receive a refresh token or client secret.
+
+Service registration alone does not add OAuth offers to the discovery manifest; the catalog
+contract and gateway support must be deployed before advertising those offers.

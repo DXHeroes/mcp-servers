@@ -48,10 +48,12 @@ export function authenticate(
 export function resolveCredential(
   req: IncomingMessage,
   config: Pick<RuntimeConfig, 'sharedCredential'>,
+  auth?: 'oauth',
 ): ApiKeyConfig | null {
   const mode = singleHeader(req, 'x-mcp-credential-mode') ?? 'shared';
   if (mode !== 'shared' && mode !== 'per_user')
     throw new HttpFailure(400, 'invalid_credential_mode');
+  if (auth === 'oauth' && mode !== 'per_user') throw new HttpFailure(400, 'per_user_required');
   const encoded = singleHeader(req, 'x-mcp-upstream-credential');
   let secret: string | undefined;
   if (encoded !== undefined) {
@@ -61,6 +63,11 @@ export function resolveCredential(
       if (bytes.toString('base64url') !== encoded) throw new Error();
       secret = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
       if (!secret || secret.includes('\0')) throw new Error();
+      if (
+        auth === 'oauth' &&
+        ![...secret].every((c) => c.charCodeAt(0) > 32 && c.charCodeAt(0) < 127)
+      )
+        throw new Error();
     } catch {
       throw new HttpFailure(400, 'invalid_upstream_credential');
     }

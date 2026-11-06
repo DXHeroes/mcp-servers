@@ -11,6 +11,7 @@ import { Client, StreamableHTTPClientTransport } from '@modelcontextprotocol/cli
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 import { loadConfig, type RuntimeConfig } from '../src/config.js';
+import type { ConnectorEndpoint } from '../src/endpoints.js';
 import { createConnectorHttpServer } from '../src/http.js';
 
 const digest = (value: string) => createHash('sha256').update(value).digest('hex');
@@ -101,8 +102,11 @@ afterEach(async () => {
   for (const close of cleanups.reverse()) await close();
   cleanups.length = 0;
 });
-async function start(overrides: Partial<RuntimeConfig> = {}) {
-  const runtime = createConnectorHttpServer(pkg, { ...config, ...overrides });
+async function start(
+  overrides: Partial<RuntimeConfig> = {},
+  endpoints?: readonly ConnectorEndpoint[],
+) {
+  const runtime = createConnectorHttpServer(pkg, { ...config, ...overrides }, endpoints);
   await new Promise<void>((resolve) => runtime.server.listen(0, '127.0.0.1', resolve));
   cleanups.push(() => runtime.close());
   return new URL(`http://127.0.0.1:${(runtime.server.address() as { port: number }).port}/mcp`);
@@ -289,3 +293,71 @@ it('requires explicit authentication and prevents publicly bound test mode', asy
     loadConfig({ MCP_LOCAL_TEST_MODE: 'true', MCP_HOST: '127.0.0.1' }),
   ).resolves.toMatchObject({ localTestMode: true });
 });
+
+for (const era of ['auto', 'legacy'] as const) {
+  it(`${era}: isolates service tool lists and concurrent OAuth credentials`, async () => {
+    class CalendarFixture extends Fixture {
+      override async listTools() {
+        return (await super.listTools()).map((tool) => ({ ...tool, name: 'calendar_list' }));
+      }
+    }
+    const calendar: McpPackage = { ...pkg, createServer: (c) => new CalendarFixture(c) };
+    const url = await start({}, [
+      { path: '/tasks/mcp', package: pkg, auth: 'oauth' },
+      { path: '/calendar/mcp', package: calendar, auth: 'oauth' },
+    ]);
+    const tasksUrl = new URL('/tasks/mcp', url);
+    const calendarUrl = new URL('/calendar/mcp', url);
+    const a = await client(tasksUrl, era, 'account-a', 'per_user');
+    const b = await client(tasksUrl, era, 'account-b', 'per_user');
+    const c = await client(calendarUrl, era, 'account-c', 'per_user');
+    expect((await a.listTools()).tools.map((t) => t.name)).toEqual(['echo']);
+    expect((await c.listTools()).tools.map((t) => t.name)).toEqual(['calendar_list']);
+    const results = await Promise.all([
+      a.callTool({ name: 'echo' }),
+      b.callTool({ name: 'echo' }),
+      c.callTool({ name: 'calendar_list' }),
+    ]);
+    for (const [i, secret] of ['account-a', 'account-b', 'account-c'].entries()) {
+      expect(results[i]?.structuredContent).toEqual(
+        era === 'legacy' ? { result: [digest(secret)] } : [digest(secret)],
+      );
+    }
+    const headers = {
+      Authorization: `Bearer ${config.accessToken}`,
+      'Content-Type': 'application/json',
+    };
+    for (const path of ['/mcp', '/unknown/mcp', '/tasks/mcp?service=calendar']) {
+      expect(
+        (await fetch(new URL(path, url), { method: 'POST', headers, body: '{}' })).status,
+      ).toBe(404);
+    }
+    for (const token of ['contains space', 'contains\r\nnewline', 'non-ascii-á']) {
+      const response = await fetch(tasksUrl, {
+        method: 'POST',
+        headers: {
+          ...headers,
+          'X-MCP-Credential-Mode': 'per_user',
+          'X-MCP-Upstream-Credential': Buffer.from(token).toString('base64url'),
+        },
+        body: '{}',
+      });
+      expect(response.status).toBe(400);
+      expect(await response.json()).toEqual({ error: 'invalid_upstream_credential' });
+    }
+    for (const credentialMode of [undefined, 'shared', 'per_user']) {
+      const response = await fetch(tasksUrl, {
+        method: 'POST',
+        headers: {
+          ...headers,
+          ...(credentialMode ? { 'X-MCP-Credential-Mode': credentialMode } : {}),
+        },
+        body: '{}',
+      });
+      expect(response.status).toBe(400);
+      expect(await response.json()).toEqual({
+        error: credentialMode === 'per_user' ? 'upstream_credential_required' : 'per_user_required',
+      });
+    }
+  });
+}
