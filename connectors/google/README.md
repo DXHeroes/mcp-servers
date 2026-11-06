@@ -51,7 +51,9 @@ normal signed, native multiarch release workflow. No image is published by local
 Automated tests use synthetic provider responses, actual HTTP listeners and official MCP SDK
 clients in both protocol eras. Live personal/Workspace accounts, gateway managed-preset setup,
 image publication and the end-to-end integrator acceptance remain required before rollout.
-The existing discovery generator does not yet advertise OAuth service offers: do not create
-an API-key offer for this package as a workaround.
+Generate an OAuth offer with `node scripts/catalog-manifest.mjs deployment.json`, where the
+explicit deployment map contains `{"google-tasks":"https://<connector-host>/tasks/mcp"}`.
+The package ID `google` is not a catalog offer alias. Only enable that source after the consuming
+gateway supports connector OAuth and managed presets; do not substitute an API-key offer.
 
 API reference: <https://developers.google.com/workspace/tasks/reference/rest>.

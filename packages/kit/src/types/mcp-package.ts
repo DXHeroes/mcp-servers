@@ -3,6 +3,16 @@
 import type { McpServer } from '../abstractions/McpServer.js';
 import type { ApiKeyConfig, ToolPermission } from './mcp.js';
 
+/** Public provider hints only; OAuth clients and tokens never belong in metadata. */
+export interface McpOAuthDefaults {
+  authorizationServerUrl: string;
+  authorizationEndpoint: string;
+  tokenEndpoint: string;
+  scopes: string[];
+  resource?: string;
+  authorizeParams?: { access_type?: string; prompt?: string; audience?: string };
+  noMetadata?: boolean;
+}
 export interface McpPackageMetadata {
   id: string;
   name: string;
@@ -11,6 +21,7 @@ export interface McpPackageMetadata {
   author?: string;
   license?: string;
   requiresApiKey: boolean;
+  oauthDefaults?: McpOAuthDefaults;
   apiKeyHint?: string;
   credentialLabel?: string;
   apiKeyDefaults?: { headerName: string; headerValueTemplate: string };

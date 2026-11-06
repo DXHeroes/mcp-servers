@@ -83,3 +83,18 @@ it('serves only valid snapshots and fails discovery/readiness during invalid upd
   await writeFile(file, fixture);
   expect((await get()).status).toBe(200);
 });
+
+it('accepts per-user OAuth connector offers and rejects shared or mixed delivery', () => {
+  const data = JSON.parse(fixture);
+  const auth = {
+    type: 'oauth',
+    credentialDelivery: 'connector_base64url',
+    credentialModes: ['per_user'],
+  };
+  data.servers[0].auth = auth;
+  expect(parseManifest(JSON.stringify(data)).servers[0]?.auth.type).toBe('oauth');
+  for (const modes of [['shared'], ['shared', 'per_user']]) {
+    data.servers[0].auth = { ...auth, credentialModes: modes };
+    expect(() => parseManifest(JSON.stringify(data))).toThrow('invalid_manifest');
+  }
+});

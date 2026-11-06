@@ -66,8 +66,8 @@ Discovery is not a live health check and never installs, builds or runs the adve
 Generate a manifest from an explicit deployment map:
 `node scripts/catalog-manifest.mjs fixtures/deployment-endpoints.example.json`.
 Replace every example URL with an actual deployment endpoint. The generator never guesses
-localhost endpoints. Credentialed connectors advertise `connector_base64url` delivery and both
-shared/personal modes; ByzData advertises none/shared. Documentation URL fragments are removed to
+localhost endpoints. API-key connectors advertise `connector_base64url` delivery and both
+shared/personal modes; OAuth service offers use per-user mode only; ByzData advertises none/shared. Documentation URL fragments are removed to
 match the discovery URL contract.
 
 ## Containers and validation
@@ -134,3 +134,12 @@ This is independent of HTTP 401, which denotes the connector's service authentic
 The gateway can refresh the user's token and replay once after this signal. Do not use it for
 insufficient permissions, 429, 5xx, a timeout, or a write whose result is uncertain. Never attach
 provider response text, headers, credentials or nested causes to the error.
+
+The manifest generator accepts **offer IDs**, which can differ from the image/package ID.
+For the Google package, use `google-tasks` mapped to the complete deployment URL ending in
+`/tasks/mcp`. Its OAuth endpoints and scopes come from the service package's public metadata;
+there is no root `google` API-key offer. Existing one-service packages retain their IDs and
+authentication. A package declaring an OAuth endpoint must also supply provider defaults.
+The delivery extension is a coordinated discovery-v1 snapshot amendment: gateways must support
+it before the new source is enabled. Keep OAuth offers separate from an existing catalog until
+all consumers are compatible. Schema acceptance is not proof of a live OAuth connection.

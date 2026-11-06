@@ -21,6 +21,7 @@ export type {
   ToolRiskTier,
 } from './types/mcp.js';
 export type {
+  McpOAuthDefaults,
   McpPackage,
   McpPackageMetadata,
   McpSeedConfig,

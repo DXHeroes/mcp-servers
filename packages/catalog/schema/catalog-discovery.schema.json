@@ -306,6 +306,10 @@
                       "per_user"
                     ]
                   },
+                  "credentialDelivery": {
+                    "type": "string",
+                    "const": "connector_base64url"
+                  },
                   "oauthDefaults": {
                     "type": "object",
                     "properties": {
@@ -419,6 +423,29 @@
                         }
                       }
                     }
+                  },
+                  {
+                    "if": {
+                      "properties": {
+                        "credentialDelivery": {
+                          "const": "connector_base64url"
+                        }
+                      },
+                      "required": [
+                        "credentialDelivery"
+                      ]
+                    },
+                    "then": {
+                      "properties": {
+                        "credentialModes": {
+                          "minItems": 1,
+                          "maxItems": 1,
+                          "items": {
+                            "const": "per_user"
+                          }
+                        }
+                      }
+                    }
                   }
                 ]
               }
@@ -452,6 +479,5 @@
     "servers"
   ],
   "additionalProperties": false,
-  "$id": "https://local-mcp-gateway.dev/schemas/catalog-discovery-v1.json",
   "description": "Catalog discovery v1. In addition to JSON Schema, reject duplicate servers[].id, credential-bearing or malformed URLs, and documents exceeding 2097152 UTF-8 bytes. Every outbound URL must pass the gateway network policy before publication. Metadata is never executable code."
 }

@@ -10,13 +10,28 @@ export const mcpPackage: McpPackage = {
     version: '0.1.0',
     author: 'DX Heroes',
     license: 'MIT',
-    requiresApiKey: true,
+    requiresApiKey: false,
     docsUrl: 'https://developers.google.com/workspace/tasks/reference/rest',
   },
   createServer: (credential) => new GoogleTasksServer(credential),
 };
+export const tasksPackage: McpPackage = {
+  ...mcpPackage,
+  metadata: {
+    ...mcpPackage.metadata,
+    id: 'google-tasks',
+    oauthDefaults: {
+      authorizationServerUrl: 'https://accounts.google.com',
+      authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
+      tokenEndpoint: 'https://oauth2.googleapis.com/token',
+      scopes: ['https://www.googleapis.com/auth/tasks'],
+      authorizeParams: { access_type: 'offline', prompt: 'consent' },
+      noMetadata: true,
+    },
+  },
+};
 export const endpoints: readonly ConnectorEndpoint[] = [
-  { path: '/tasks/mcp', package: mcpPackage, auth: 'oauth' },
+  { path: '/tasks/mcp', package: tasksPackage, auth: 'oauth' },
 ];
 export { GoogleTasksServer } from './tasks.js';
 export default mcpPackage;

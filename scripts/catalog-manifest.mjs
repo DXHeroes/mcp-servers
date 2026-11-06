@@ -1,45 +1,57 @@
 #!/usr/bin/env node
-// Input is an explicit JSON map of connector ID -> deployment URL. No discovery scans.
+// Explicit catalog offer ID -> deployment URL. Packages supply static service declarations.
 import { readFile } from 'node:fs/promises';
+import { parseManifest } from '../packages/catalog/dist/index.js';
+import { connectorIds } from './connector-inventory.mjs';
 
-const ids = [
-  'abra-flexi',
-  'byzdata',
-  'fakturoid',
-  'gemini-deep-research',
-  'merk',
-  'postgres',
-  'toggl',
-];
 const endpoints = JSON.parse(await readFile(process.argv[2], 'utf8'));
-if (Object.keys(endpoints).some((id) => !ids.includes(id))) throw new Error('Unknown connector ID');
-const servers = [];
-for (const id of ids) {
-  if (endpoints[id] === undefined) continue;
-  const {
-    mcpPackage: { metadata: m },
-  } = await import(`../connectors/${id}/dist/index.js`);
-  servers.push({
-    id,
-    name: m.name,
-    description: m.description,
-    version: m.version,
-    endpoint: { transport: 'streamable-http', url: endpoints[id] },
-    auth: m.requiresApiKey
-      ? {
-          type: 'api_key',
-          credentialModes: ['shared', 'per_user'],
-          defaultCredentialMode: 'shared',
-          credentialDelivery: 'connector_base64url',
-          ...(m.credentialLabel ? { credentialLabel: m.credentialLabel } : {}),
-          ...(m.apiKeyHint ? { apiKeyHint: m.apiKeyHint } : {}),
-        }
-      : { type: 'none', credentialModes: ['shared'], defaultCredentialMode: 'shared' },
-    ...(m.docsUrl ? { docsUrl: m.docsUrl.split('#')[0] } : {}),
-    ...(m.author ? { author: m.author } : {}),
-  });
+if (!endpoints || typeof endpoints !== 'object' || Array.isArray(endpoints))
+  throw new Error('Invalid deployment map');
+const offers = new Map();
+for (const id of await connectorIds()) {
+  const mod = await import(`../connectors/${id}/dist/index.js`);
+  const services = mod.endpoints ?? [{ path: '/mcp', package: mod.mcpPackage }];
+  for (const service of services) {
+    const m = service.package.metadata;
+    if (offers.has(m.id)) throw new Error('Duplicate catalog offer ID');
+    if ((service.auth === 'oauth') !== Boolean(m.oauthDefaults))
+      throw new Error('OAuth services require explicit provider defaults and an OAuth endpoint');
+    const auth =
+      service.auth === 'oauth'
+        ? {
+            type: 'oauth',
+            credentialModes: ['per_user'],
+            defaultCredentialMode: 'per_user',
+            credentialDelivery: 'connector_base64url',
+            oauthDefaults: m.oauthDefaults,
+          }
+        : m.requiresApiKey
+          ? {
+              type: 'api_key',
+              credentialModes: ['shared', 'per_user'],
+              defaultCredentialMode: 'shared',
+              credentialDelivery: 'connector_base64url',
+              ...(m.credentialLabel ? { credentialLabel: m.credentialLabel } : {}),
+              ...(m.apiKeyHint ? { apiKeyHint: m.apiKeyHint } : {}),
+            }
+          : { type: 'none', credentialModes: ['shared'], defaultCredentialMode: 'shared' };
+    offers.set(m.id, {
+      id: m.id,
+      name: m.name,
+      description: m.description,
+      version: m.version,
+      auth,
+      ...(m.docsUrl ? { docsUrl: m.docsUrl.split('#')[0] } : {}),
+      ...(m.author ? { author: m.author } : {}),
+    });
+  }
 }
+if (Object.keys(endpoints).some((id) => !offers.has(id)))
+  throw new Error('Unknown catalog offer ID');
+const servers = Object.entries(endpoints).map(([id, url]) => ({
+  ...offers.get(id),
+  endpoint: { transport: 'streamable-http', url },
+}));
 const manifest = JSON.stringify({ schemaVersion: 1, servers }, null, 2);
-const { parseManifest } = await import('../packages/catalog/dist/index.js');
 parseManifest(manifest);
 console.log(manifest);
