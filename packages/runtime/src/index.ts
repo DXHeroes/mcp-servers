@@ -4,3 +4,4 @@ export { runConnectorCli } from './cli.js';
 export { loadConfig, type RuntimeConfig, readSecret } from './config.js';
 export { type ConnectorEndpoint, connectorEndpoints } from './endpoints.js';
 export { createConnectorHttpServer, safeFailure } from './http.js';
+export { UpstreamCredentialInvalidError } from './oauth-errors.js';

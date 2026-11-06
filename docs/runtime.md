@@ -118,3 +118,19 @@ receive a refresh token or client secret.
 
 Service registration alone does not add OAuth offers to the discovery manifest; the catalog
 contract and gateway support must be deployed before advertising those offers.
+
+## Provider authentication refusal
+
+OAuth connector implementations can throw `UpstreamCredentialInvalidError` from
+`@dxheroes/mcp-runtime` after the provider definitively refuses the user's credential before
+performing the requested operation. The runtime returns a JSON-RPC error with code `-32050`,
+a constant message and data:
+
+```json
+{"io.dxheroes.connector/error":{"version":1,"reason":"upstream_credential_invalid"}}
+```
+
+This is independent of HTTP 401, which denotes the connector's service authentication.
+The gateway can refresh the user's token and replay once after this signal. Do not use it for
+insufficient permissions, 429, 5xx, a timeout, or a write whose result is uncertain. Never attach
+provider response text, headers, credentials or nested causes to the error.
