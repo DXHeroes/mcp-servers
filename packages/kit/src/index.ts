@@ -28,6 +28,13 @@ export type {
   McpServerFactory,
 } from './types/mcp-package.js';
 export { callSignal, withToolCallContext } from './utils/call-context.js';
+export type { ProviderExtraField, ProviderExtras } from './utils/provider-extras.js';
+export {
+  decodeUpstreamContext,
+  encodeUpstreamContext,
+  providerExtraFieldsSchema,
+  providerExtrasSchema,
+} from './utils/provider-extras.js';
 export type {
   RateLimitedResponse,
   RateLimitPacerOptions,

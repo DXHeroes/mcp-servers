@@ -62,7 +62,12 @@ export function createConnectorHttpServer(
         if (!endpoint) throw new HttpFailure(404, 'not_found');
         authenticate(req, config);
         if (pending.size >= 128) throw new HttpFailure(503, 'capacity_reached');
-        const credential = resolveCredential(req, config, endpoint.auth);
+        const credential = resolveCredential(
+          req,
+          config,
+          endpoint.auth,
+          endpoint.providerExtraFields,
+        );
         if (req.method !== 'POST') throw new HttpFailure(405, 'method_not_allowed');
         const body = await readBody(req, config.maxBodyBytes);
         handler = createMcpHandler(

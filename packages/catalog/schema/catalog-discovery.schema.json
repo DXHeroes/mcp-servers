@@ -365,6 +365,14 @@
                       },
                       "noMetadata": {
                         "type": "boolean"
+                      },
+                      "providerExtraFields": {
+                        "maxItems": 1,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "const": "api_domain"
+                        }
                       }
                     },
                     "required": [
@@ -445,6 +453,30 @@
                           }
                         }
                       }
+                    }
+                  },
+                  {
+                    "if": {
+                      "properties": {
+                        "oauthDefaults": {
+                          "required": [
+                            "providerExtraFields"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "oauthDefaults"
+                      ]
+                    },
+                    "then": {
+                      "properties": {
+                        "credentialDelivery": {
+                          "const": "connector_base64url"
+                        }
+                      },
+                      "required": [
+                        "credentialDelivery"
+                      ]
                     }
                   }
                 ]

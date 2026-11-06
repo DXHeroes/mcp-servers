@@ -68,6 +68,9 @@ export interface McpGetPromptResult {
   messages: McpPromptMessage[];
 }
 export interface ApiKeyConfig {
+  /** Runtime-only, selected OAuth token metadata; never accepted from tool arguments. */
+  providerExtras?: import('../utils/provider-extras.js').ProviderExtras;
+
   apiKey: string;
   headerName: 'Authorization' | 'X-API-Key' | string;
   headerValue: string;

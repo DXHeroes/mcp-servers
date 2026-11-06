@@ -143,3 +143,25 @@ authentication. A package declaring an OAuth endpoint must also supply provider 
 The delivery extension is a coordinated discovery-v1 snapshot amendment: gateways must support
 it before the new source is enabled. Keep OAuth offers separate from an existing catalog until
 all consumers are compatible. Schema acceptance is not proof of a live OAuth connection.
+
+## Selected OAuth provider context
+
+An OAuth package can declare `oauthDefaults.providerExtraFields: ['api_domain']` in its public
+metadata. The catalog preserves that explicit selection; the gateway pins it on a managed
+preset, selects it from token responses and stores it encrypted with the user's credential.
+The only currently supported field is `api_domain`, an HTTPS origin without user information,
+query, fragment or an API path, at most 2,048 characters. A provider implementation must further
+restrict permitted provider hostnames before sending credentials to this origin.
+
+The optional `X-MCP-Upstream-Context` header carries unpadded canonical base64url UTF-8 JSON:
+`{"version":1,"providerExtras":{"api_domain":"https://tenant.example.test"}}`.
+The decoded envelope is limited to 4,096 bytes. The runtime validates the strict shape before
+creating a connector and supplies the selected values as `ApiKeyConfig.providerExtras`.
+The access token remains `ApiKeyConfig.apiKey`; the service bearer is never part of that object.
+Duplicate headers, malformed encodings, unknown fields and fields not declared by the OAuth
+endpoint are refused. The declaration is copied at registration and cannot be expanded by a
+later mutation of package metadata. Legacy API-key endpoints refuse context headers.
+
+This mechanism supplies provider context; it does not implement a new provider or register an
+OAuth application. Keep OAuth offers requiring it separate from consumers whose strict catalog
+schema predates the optional field, and install compatible gateway/runtime binaries first.

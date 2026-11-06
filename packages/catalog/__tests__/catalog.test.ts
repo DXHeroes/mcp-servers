@@ -98,3 +98,31 @@ it('accepts per-user OAuth connector offers and rejects shared or mixed delivery
     expect(() => parseManifest(JSON.stringify(data))).toThrow('invalid_manifest');
   }
 });
+
+it('accepts only explicit safe provider metadata selection on OAuth connector offers', () => {
+  for (const [fields, delivery, valid] of [
+    [['api_domain'], 'connector_base64url', true],
+    [['refresh_token'], 'connector_base64url', false],
+    [['api_domain', 'api_domain'], 'connector_base64url', false],
+    [['api_domain'], undefined, false],
+  ] as const) {
+    const data = JSON.parse(fixture);
+    data.servers[0].auth = {
+      type: 'oauth',
+      credentialModes: ['per_user'],
+      ...(delivery ? { credentialDelivery: delivery } : {}),
+      oauthDefaults: {
+        authorizationServerUrl: 'https://oauth.example.test',
+        authorizationEndpoint: 'https://oauth.example.test/authorize',
+        tokenEndpoint: 'https://oauth.example.test/token',
+        scopes: [],
+        providerExtraFields: fields,
+      },
+    };
+    if (valid)
+      expect(
+        parseManifest(JSON.stringify(data)).servers[0]!.auth.oauthDefaults?.providerExtraFields,
+      ).toEqual(fields);
+    else expect(() => parseManifest(JSON.stringify(data))).toThrow('invalid_manifest');
+  }
+});

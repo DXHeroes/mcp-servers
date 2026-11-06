@@ -1,6 +1,11 @@
 import { createHash, timingSafeEqual } from 'node:crypto';
 import type { IncomingMessage } from 'node:http';
-import type { ApiKeyConfig } from '@dxheroes/mcp-kit';
+import {
+  type ApiKeyConfig,
+  decodeUpstreamContext,
+  type ProviderExtraField,
+  type ProviderExtras,
+} from '@dxheroes/mcp-kit';
 import type { RuntimeConfig } from './config.js';
 
 export class HttpFailure extends Error {
@@ -49,6 +54,7 @@ export function resolveCredential(
   req: IncomingMessage,
   config: Pick<RuntimeConfig, 'sharedCredential'>,
   auth?: 'oauth',
+  providerExtraFields: readonly ProviderExtraField[] = [],
 ): ApiKeyConfig | null {
   const mode = singleHeader(req, 'x-mcp-credential-mode') ?? 'shared';
   if (mode !== 'shared' && mode !== 'per_user')
@@ -74,8 +80,30 @@ export function resolveCredential(
   }
   if (mode === 'per_user' && secret === undefined)
     throw new HttpFailure(400, 'upstream_credential_required');
+  const context = singleHeader(req, 'x-mcp-upstream-context');
+  let providerExtras: ProviderExtras | undefined;
+  if (context !== undefined) {
+    if (auth !== 'oauth' || mode !== 'per_user')
+      throw new HttpFailure(400, 'invalid_upstream_context');
+    try {
+      providerExtras = decodeUpstreamContext(context);
+      if (
+        Object.keys(providerExtras).some(
+          (key) => !providerExtraFields.includes(key as ProviderExtraField),
+        )
+      )
+        throw new Error('Undeclared provider metadata');
+    } catch {
+      throw new HttpFailure(400, 'invalid_upstream_context');
+    }
+  }
   secret ??= config.sharedCredential;
   return secret === undefined
     ? null
-    : { apiKey: secret, headerName: 'Authorization', headerValue: secret };
+    : {
+        apiKey: secret,
+        headerName: 'Authorization',
+        headerValue: secret,
+        ...(providerExtras ? { providerExtras } : {}),
+      };
 }

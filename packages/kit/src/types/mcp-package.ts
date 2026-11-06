@@ -12,6 +12,7 @@ export interface McpOAuthDefaults {
   resource?: string;
   authorizeParams?: { access_type?: string; prompt?: string; audience?: string };
   noMetadata?: boolean;
+  providerExtraFields?: Array<'api_domain'>;
 }
 export interface McpPackageMetadata {
   id: string;
