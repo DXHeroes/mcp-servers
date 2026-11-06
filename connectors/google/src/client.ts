@@ -52,6 +52,7 @@ export class GoogleClient {
             method,
             signal,
             redirect: 'error',
+            maxRedirects: 0,
             allowPrivate: false,
             headers: {
               Authorization: `Bearer ${this.accessToken}`,

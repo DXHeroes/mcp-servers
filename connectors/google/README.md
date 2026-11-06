@@ -37,7 +37,7 @@ Updates patch supplied fields only. `tasks_clear_completed` hides completed task
 provider's clear endpoint specifies; it does not delete the list. Deletes and clear are marked
 destructive. Integrator writes still need the gateway preset's write permission.
 
-Requests have a 20-second maximum. Safe reads retry bounded 429/5xx responses; writes retry
+Each tool call has one 20-second deadline, including non-cancellable DNS preparation. Provider redirects are refused. Safe reads retry bounded 429/5xx responses; writes retry
 only an explicit 429 refusal. A long throttle returns `RATE_LIMITED` and `retryAfterMs` instead
 of waiting. A definite HTTP 401 throws the runtime's upstream credential signal. Insufficient
 scope (403), network failures and uncertain write outcomes never trigger that signal.

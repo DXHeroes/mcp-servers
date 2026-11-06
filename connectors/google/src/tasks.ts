@@ -4,7 +4,7 @@ import {
   McpServer,
   type McpTool,
   type ToolCallContext,
-  withToolCallContext,
+  withToolCallDeadline,
 } from '@dxheroes/mcp-kit';
 import { UpstreamCredentialInvalidError } from '@dxheroes/mcp-runtime';
 import { z } from 'zod';
@@ -245,7 +245,7 @@ export class GoogleTasksServer extends McpServer {
           pick(args, op.query ?? []),
           op.fixedBody ?? (op.body ? pick(args, op.body) : undefined),
         );
-      const result = context ? await withToolCallContext(context, run) : await run();
+      const result = await withToolCallDeadline(20_000, run, context);
       return {
         content: [{ type: 'text', text: JSON.stringify(result) }],
         structuredContent: result,

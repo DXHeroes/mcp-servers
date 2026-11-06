@@ -57,6 +57,9 @@
     },
     {
       "path": "./connectors/google"
+    },
+    {
+      "path": "./connectors/outlook"
     }
   ]
 }

@@ -165,3 +165,17 @@ later mutation of package metadata. Legacy API-key endpoints refuse context head
 This mechanism supplies provider context; it does not implement a new provider or register an
 OAuth application. Keep OAuth offers requiring it separate from consumers whose strict catalog
 schema predates the optional field, and install compatible gateway/runtime binaries first.
+
+
+## Synchronous OAuth tool budgets
+
+Google Tasks and Outlook use `withToolCallDeadline` from the kit for one 20-second
+logical call budget, including provider preparation and multi-request work. The
+helper combines caller cancellation, a timer and monotonic checks. It races work
+that cannot observe cancellation, then prevents delayed DNS completion from
+dispatching HTTP after that scope has expired. Nested budgets cannot extend their
+parent. The standard runtime budget for unrelated long-running tools is unchanged.
+
+These OAuth clients pass `maxRedirects: 0` to `safeFetch`. Its own redirect loop
+is controlled by that option; `RequestInit.redirect` alone does not configure it.
+A service-owned bearer and a user's provider bearer must never be interchangeable.

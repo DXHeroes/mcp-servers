@@ -27,7 +27,12 @@ export type {
   McpSeedConfig,
   McpServerFactory,
 } from './types/mcp-package.js';
-export { callSignal, withToolCallContext } from './utils/call-context.js';
+export {
+  callSignal,
+  checkToolCallDeadline,
+  withToolCallContext,
+  withToolCallDeadline,
+} from './utils/call-context.js';
 export type { ProviderExtraField, ProviderExtras } from './utils/provider-extras.js';
 export {
   decodeUpstreamContext,

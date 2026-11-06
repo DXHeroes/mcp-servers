@@ -1,6 +1,6 @@
 import { lookup } from 'node:dns/promises';
 import { isIP } from 'node:net';
-import { callSignal } from './call-context.js';
+import { callSignal, checkToolCallDeadline } from './call-context.js';
 
 /**
  * Converts an IPv6 address to a 128-bit BigInt.
@@ -120,6 +120,8 @@ export async function safeFetch(input: string | URL, init?: SafeFetchOptions): P
   await validateUrlHost(url, allowPrivate);
 
   while (true) {
+    checkToolCallDeadline();
+    signal?.throwIfAborted();
     const response = await fetch(url, { ...fetchInit, redirect: 'manual' });
 
     if (!REDIRECT_STATUSES.has(response.status)) {
