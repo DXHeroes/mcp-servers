@@ -63,6 +63,9 @@ jobs:
           - id: microsoft-teams
             dockerfile: Dockerfile.connector
             build_args: CONNECTOR=microsoft-teams
+          - id: slack
+            dockerfile: Dockerfile.connector
+            build_args: CONNECTOR=slack
           - id: catalog
             dockerfile: Dockerfile.catalog
             build_args: ''

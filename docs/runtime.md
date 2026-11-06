@@ -169,7 +169,7 @@ schema predates the optional field, and install compatible gateway/runtime binar
 
 ## Synchronous OAuth tool budgets
 
-Google Tasks, Outlook and Microsoft Teams use `withToolCallDeadline` from the kit for one 20-second
+Google Tasks, Outlook, Microsoft Teams and the internal Slack bridge use `withToolCallDeadline` from the kit for one 20-second
 logical call budget, including provider preparation and multi-request work. The
 helper combines caller cancellation, a timer and monotonic checks. It races work
 that cannot observe cancellation, then prevents delayed DNS completion from

@@ -66,6 +66,9 @@
     },
     {
       "path": "./connectors/microsoft-teams"
+    },
+    {
+      "path": "./connectors/slack"
     }
   ]
 }

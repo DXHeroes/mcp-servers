@@ -36,6 +36,7 @@ An ordinary REST API is not MCP; import its OpenAPI description in Local MCP Gat
 | Google Tasks | Local build; first release pending | Per-user OAuth task lists and tasks at `/tasks/mcp` |
 | Outlook | Local build; first release pending | Personal/work mail at `/mail/mcp`, calendar at `/calendar/mcp` |
 | Microsoft Teams | Local build; first release pending | Work/school chats and channels at `/mcp` |
+| Slack | Local build; internal pilot only | Per-user Web API bridge; official MCP is the migration target |
 | Catalog | `ghcr.io/dxheroes/mcp-catalog` | Validated discovery offers |
 | Trusted bundle | `ghcr.io/dxheroes/mcp-bundle` | Optional prepared multi-language services |
 
