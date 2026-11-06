@@ -3,17 +3,6 @@ import { missingRecursiveIgnores } from './docker-context-policy.mjs';
 import { checkNativeReleaseWorkflow } from './native-release-policy.mjs';
 
 const root = new URL('../', import.meta.url);
-const expectedImages = [
-  'abra-flexi',
-  'byzdata',
-  'fakturoid',
-  'gemini-deep-research',
-  'merk',
-  'postgres',
-  'toggl',
-  'catalog',
-  'bundle',
-];
 const failures = [];
 const read = (name) => readFile(new URL(name, root), 'utf8');
 
@@ -36,10 +25,8 @@ for (const [name, workflow] of [
     failures.push(`${name} workflow must disable checkout credential persistence`);
 }
 
-for (const image of expectedImages) {
-  if (!release.includes(`'${image}-v*'`))
-    failures.push(`release must accept the independent ${image} version tag`);
-}
+if (!release.includes("'*-v*'") || !release.includes('node scripts/release-target.mjs'))
+  failures.push('release must validate independent component tags through the workspace inventory');
 for (const platform of ['linux/amd64', 'linux/arm64']) {
   if (!release.includes(platform)) failures.push(`release scan is missing ${platform}`);
 }

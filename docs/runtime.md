@@ -73,8 +73,8 @@ match the discovery URL contract.
 ## Containers and validation
 
 Build `docker build -f Dockerfile.connector --build-arg CONNECTOR=toggl -t mcp-toggl .` or
-`docker build -f Dockerfile.catalog -t mcp-catalog .`. Only the seven explicit connector IDs are
-accepted. Containers install dependencies at build time, run as UID 65532, support arbitrary UIDs,
+`docker build -f Dockerfile.catalog -t mcp-catalog .`. Connector IDs are validated against checked-in workspace package metadata; unknown IDs are
+refused. Containers install dependencies at build time, run as UID 65532, support arbitrary UIDs,
 and run with `--read-only --cap-drop ALL --security-opt no-new-privileges`. Override the connector
 command with `--stdio` for local clients. TLS termination belongs to the deployment ingress.
 Never expose a connector bearer token over an untrusted plaintext network.

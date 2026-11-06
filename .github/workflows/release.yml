@@ -3,15 +3,7 @@ name: Release one MCP server image
 on:
   push:
     tags:
-      - 'abra-flexi-v*'
-      - 'byzdata-v*'
-      - 'fakturoid-v*'
-      - 'gemini-deep-research-v*'
-      - 'merk-v*'
-      - 'postgres-v*'
-      - 'toggl-v*'
-      - 'catalog-v*'
-      - 'bundle-v*'
+      - '*-v*'
 
 permissions:
   contents: read
@@ -41,28 +33,7 @@ jobs:
       - id: component
         name: Match the component tag to its package version
         run: |
-          set -euo pipefail
-          tag="$GITHUB_REF_NAME"
-          component="${tag%-v*}"
-          version="${tag#"$component-v"}"
-          case "$component" in
-            abra-flexi|byzdata|fakturoid|gemini-deep-research|merk|postgres|toggl)
-              package="connectors/$component/package.json"
-              dockerfile=Dockerfile.connector
-              build_args="CONNECTOR=$component"
-              ;;
-            catalog|bundle)
-              package="packages/$component/package.json"
-              dockerfile="Dockerfile.$component"
-              build_args=''
-              ;;
-            *) exit 2 ;;
-          esac
-          [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][a-zA-Z0-9.-]+)?$ ]]
-          test "$version" = "$(node -p "require('./$package').version")"
-          printf 'component=%s\nversion=%s\nimage=%s\ndockerfile=%s\nbuild_args=%s\n' \
-            "$component" "$version" "ghcr.io/dxheroes/mcp-$component" "$dockerfile" "$build_args" \
-            >> "$GITHUB_OUTPUT"
+          node scripts/release-target.mjs "$GITHUB_REF_NAME" >> "$GITHUB_OUTPUT"
 
   build:
     needs: validate
