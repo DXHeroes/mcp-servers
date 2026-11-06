@@ -35,6 +35,7 @@ An ordinary REST API is not MCP; import its OpenAPI description in Local MCP Gat
 | Toggl Track | `ghcr.io/dxheroes/mcp-toggl` | Time tracking and reports |
 | Google Tasks | Local build; first release pending | Per-user OAuth task lists and tasks at `/tasks/mcp` |
 | Outlook | Local build; first release pending | Personal/work mail at `/mail/mcp`, calendar at `/calendar/mcp` |
+| Microsoft Teams | Local build; first release pending | Work/school chats and channels at `/mcp` |
 | Catalog | `ghcr.io/dxheroes/mcp-catalog` | Validated discovery offers |
 | Trusted bundle | `ghcr.io/dxheroes/mcp-bundle` | Optional prepared multi-language services |
 

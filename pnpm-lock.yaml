@@ -147,8 +147,36 @@ importers:
         specifier: 4.1.11
         version: 4.1.11(@types/node@26.4.0)(vite@8.3.0(@types/node@26.4.0)(yaml@2.9.1))
 
+  connectors/microsoft-teams:
+    dependencies:
+      '@dxheroes/mcp-graph':
+        specifier: workspace:*
+        version: link:../../packages/graph
+      '@dxheroes/mcp-kit':
+        specifier: workspace:*
+        version: link:../../packages/kit
+      '@dxheroes/mcp-runtime':
+        specifier: workspace:*
+        version: link:../../packages/runtime
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
+    devDependencies:
+      '@modelcontextprotocol/client':
+        specifier: 2.0.0
+        version: 2.0.0
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: 4.1.11
+        version: 4.1.11(@types/node@26.4.0)(vite@8.3.0(@types/node@26.4.0)(yaml@2.9.1))
+
   connectors/outlook:
     dependencies:
+      '@dxheroes/mcp-graph':
+        specifier: workspace:*
+        version: link:../../packages/graph
       '@dxheroes/mcp-kit':
         specifier: workspace:*
         version: link:../../packages/kit
@@ -256,6 +284,19 @@ importers:
       '@modelcontextprotocol/client':
         specifier: 2.0.0
         version: 2.0.0
+
+  packages/graph:
+    dependencies:
+      '@dxheroes/mcp-kit':
+        specifier: workspace:*
+        version: link:../kit
+      '@dxheroes/mcp-runtime':
+        specifier: workspace:*
+        version: link:../runtime
+    devDependencies:
+      vitest:
+        specifier: 4.1.11
+        version: 4.1.11(@types/node@26.4.0)(vite@8.3.0(@types/node@26.4.0)(yaml@2.9.1))
 
   packages/kit:
     dependencies:

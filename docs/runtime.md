@@ -80,7 +80,7 @@ command with `--stdio` for local clients. TLS termination belongs to the deploym
 Never expose a connector bearer token over an untrusted plaintext network.
 
 `pnpm check` includes actual SDK HTTP/stdio tests. `python3 scripts/test-containers.py` builds and
-runs all eight images, tests both protocol eras, performs real Toggl HTTPS fixture and PostgreSQL
+runs the eight legacy fixture images, tests both protocol eras, performs real Toggl HTTPS fixture and PostgreSQL
 calls, tests arbitrary UID/read-only operation, and removes only its own containers/network.
 Set `POSTGRES_TEST_PASSWORD` and optionally `POSTGRES_TEST_PORT`/`POSTGRES_TEST_USER` for an isolated
 test PostgreSQL listener reachable from Docker through `host.docker.internal`. Optional
@@ -169,7 +169,7 @@ schema predates the optional field, and install compatible gateway/runtime binar
 
 ## Synchronous OAuth tool budgets
 
-Google Tasks and Outlook use `withToolCallDeadline` from the kit for one 20-second
+Google Tasks, Outlook and Microsoft Teams use `withToolCallDeadline` from the kit for one 20-second
 logical call budget, including provider preparation and multi-request work. The
 helper combines caller cancellation, a timer and monotonic checks. It races work
 that cannot observe cancellation, then prevents delayed DNS completion from

@@ -60,6 +60,12 @@
     },
     {
       "path": "./connectors/outlook"
+    },
+    {
+      "path": "./packages/graph"
+    },
+    {
+      "path": "./connectors/microsoft-teams"
     }
   ]
 }

@@ -54,6 +54,15 @@ jobs:
           - id: toggl
             dockerfile: Dockerfile.connector
             build_args: CONNECTOR=toggl
+          - id: google
+            dockerfile: Dockerfile.connector
+            build_args: CONNECTOR=google
+          - id: outlook
+            dockerfile: Dockerfile.connector
+            build_args: CONNECTOR=outlook
+          - id: microsoft-teams
+            dockerfile: Dockerfile.connector
+            build_args: CONNECTOR=microsoft-teams
           - id: catalog
             dockerfile: Dockerfile.catalog
             build_args: ''
