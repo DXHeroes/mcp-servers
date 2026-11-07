@@ -54,6 +54,24 @@
     },
     {
       "path": "./packages/bundle"
+    },
+    {
+      "path": "./connectors/google"
+    },
+    {
+      "path": "./connectors/outlook"
+    },
+    {
+      "path": "./packages/graph"
+    },
+    {
+      "path": "./connectors/microsoft-teams"
+    },
+    {
+      "path": "./connectors/slack"
+    },
+    {
+      "path": "./templates/typescript-oauth"
     }
   ]
 }

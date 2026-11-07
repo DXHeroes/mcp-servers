@@ -306,6 +306,10 @@
                       "per_user"
                     ]
                   },
+                  "credentialDelivery": {
+                    "type": "string",
+                    "const": "connector_base64url"
+                  },
                   "oauthDefaults": {
                     "type": "object",
                     "properties": {
@@ -361,6 +365,14 @@
                       },
                       "noMetadata": {
                         "type": "boolean"
+                      },
+                      "providerExtraFields": {
+                        "maxItems": 1,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "const": "api_domain"
+                        }
                       }
                     },
                     "required": [
@@ -419,6 +431,53 @@
                         }
                       }
                     }
+                  },
+                  {
+                    "if": {
+                      "properties": {
+                        "credentialDelivery": {
+                          "const": "connector_base64url"
+                        }
+                      },
+                      "required": [
+                        "credentialDelivery"
+                      ]
+                    },
+                    "then": {
+                      "properties": {
+                        "credentialModes": {
+                          "minItems": 1,
+                          "maxItems": 1,
+                          "items": {
+                            "const": "per_user"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "if": {
+                      "properties": {
+                        "oauthDefaults": {
+                          "required": [
+                            "providerExtraFields"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "oauthDefaults"
+                      ]
+                    },
+                    "then": {
+                      "properties": {
+                        "credentialDelivery": {
+                          "const": "connector_base64url"
+                        }
+                      },
+                      "required": [
+                        "credentialDelivery"
+                      ]
+                    }
                   }
                 ]
               }
@@ -452,6 +511,5 @@
     "servers"
   ],
   "additionalProperties": false,
-  "$id": "https://local-mcp-gateway.dev/schemas/catalog-discovery-v1.json",
   "description": "Catalog discovery v1. In addition to JSON Schema, reject duplicate servers[].id, credential-bearing or malformed URLs, and documents exceeding 2097152 UTF-8 bytes. Every outbound URL must pass the gateway network policy before publication. Metadata is never executable code."
 }

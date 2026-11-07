@@ -1,0 +1,35 @@
+{
+  "name": "@dxheroes/mcp-graph",
+  "version": "0.1.0",
+  "type": "module",
+  "license": "MIT",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "build": "tsc --build",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit -p tsconfig.test.json"
+  },
+  "dependencies": {
+    "@dxheroes/mcp-kit": "workspace:*",
+    "@dxheroes/mcp-runtime": "workspace:*"
+  },
+  "devDependencies": {
+    "vitest": "4.1.11"
+  },
+  "private": true,
+  "description": "Internal shared delegated Microsoft Graph transport"
+}

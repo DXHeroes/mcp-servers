@@ -21,12 +21,25 @@ export type {
   ToolRiskTier,
 } from './types/mcp.js';
 export type {
+  McpOAuthDefaults,
   McpPackage,
   McpPackageMetadata,
   McpSeedConfig,
   McpServerFactory,
 } from './types/mcp-package.js';
-export { callSignal, withToolCallContext } from './utils/call-context.js';
+export {
+  callSignal,
+  checkToolCallDeadline,
+  withToolCallContext,
+  withToolCallDeadline,
+} from './utils/call-context.js';
+export type { ProviderExtraField, ProviderExtras } from './utils/provider-extras.js';
+export {
+  decodeUpstreamContext,
+  encodeUpstreamContext,
+  providerExtraFieldsSchema,
+  providerExtrasSchema,
+} from './utils/provider-extras.js';
 export type {
   RateLimitedResponse,
   RateLimitPacerOptions,

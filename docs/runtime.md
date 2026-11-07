@@ -66,21 +66,21 @@ Discovery is not a live health check and never installs, builds or runs the adve
 Generate a manifest from an explicit deployment map:
 `node scripts/catalog-manifest.mjs fixtures/deployment-endpoints.example.json`.
 Replace every example URL with an actual deployment endpoint. The generator never guesses
-localhost endpoints. Credentialed connectors advertise `connector_base64url` delivery and both
-shared/personal modes; ByzData advertises none/shared. Documentation URL fragments are removed to
+localhost endpoints. API-key connectors advertise `connector_base64url` delivery and both
+shared/personal modes; OAuth service offers use per-user mode only; ByzData advertises none/shared. Documentation URL fragments are removed to
 match the discovery URL contract.
 
 ## Containers and validation
 
 Build `docker build -f Dockerfile.connector --build-arg CONNECTOR=toggl -t mcp-toggl .` or
-`docker build -f Dockerfile.catalog -t mcp-catalog .`. Only the seven explicit connector IDs are
-accepted. Containers install dependencies at build time, run as UID 65532, support arbitrary UIDs,
+`docker build -f Dockerfile.catalog -t mcp-catalog .`. Connector IDs are validated against checked-in workspace package metadata; unknown IDs are
+refused. Containers install dependencies at build time, run as UID 65532, support arbitrary UIDs,
 and run with `--read-only --cap-drop ALL --security-opt no-new-privileges`. Override the connector
 command with `--stdio` for local clients. TLS termination belongs to the deployment ingress.
 Never expose a connector bearer token over an untrusted plaintext network.
 
 `pnpm check` includes actual SDK HTTP/stdio tests. `python3 scripts/test-containers.py` builds and
-runs all eight images, tests both protocol eras, performs real Toggl HTTPS fixture and PostgreSQL
+runs the eight legacy fixture images, tests both protocol eras, performs real Toggl HTTPS fixture and PostgreSQL
 calls, tests arbitrary UID/read-only operation, and removes only its own containers/network.
 Set `POSTGRES_TEST_PASSWORD` and optionally `POSTGRES_TEST_PORT`/`POSTGRES_TEST_USER` for an isolated
 test PostgreSQL listener reachable from Docker through `host.docker.internal`. Optional
@@ -90,3 +90,92 @@ temporarily and never installed in the images. No release or registry publicatio
 The optional [trusted polyglot bundle](bundle.md) supervises prepared Node/Python
 MCP projects and builtin CLIs behind the same discovery contract. Separate
 containers remain the default; bundled projects share one security boundary.
+
+## Service endpoints
+
+A package that serves several services can supply a static endpoint registry as the third
+argument of `createConnectorHttpServer(package, config, endpoints)`, or of
+`runConnectorCli(package, args, endpoints)`:
+
+```ts
+const endpoints = [
+  { path: '/tasks/mcp', package: tasksPackage, auth: 'oauth' as const },
+  { path: '/calendar/mcp', package: calendarPackage, auth: 'oauth' as const },
+];
+```
+
+Each route constructs its own package server with the current request's credential. Only
+registered paths are served; there is no implicit `/mcp` alias when a registry is supplied.
+Duplicate, ambiguous and reserved paths fail before the listener starts. Packages without a
+registry retain `/mcp` and their existing credential behavior. Registry CLIs require `--http`.
+
+An `auth: 'oauth'` route requires `X-MCP-Credential-Mode: per_user` and an explicit access token
+in `X-MCP-Upstream-Credential` (canonical unpadded base64url UTF-8). It never falls back to
+`MCP_UPSTREAM_CREDENTIAL`, even when that shared value is configured. Whitespace and non-ASCII
+bytes are refused in OAuth access tokens. The service bearer stays in `Authorization`; it is
+not the user's upstream access token. A connector does not perform OAuth code exchange or
+receive a refresh token or client secret.
+
+Service registration alone does not add OAuth offers to the discovery manifest; the catalog
+contract and gateway support must be deployed before advertising those offers.
+
+## Provider authentication refusal
+
+OAuth connector implementations can throw `UpstreamCredentialInvalidError` from
+`@dxheroes/mcp-runtime` after the provider definitively refuses the user's credential before
+performing the requested operation. The runtime returns a JSON-RPC error with code `-32050`,
+a constant message and data:
+
+```json
+{"io.dxheroes.connector/error":{"version":1,"reason":"upstream_credential_invalid"}}
+```
+
+This is independent of HTTP 401, which denotes the connector's service authentication.
+The gateway can refresh the user's token and replay once after this signal. Do not use it for
+insufficient permissions, 429, 5xx, a timeout, or a write whose result is uncertain. Never attach
+provider response text, headers, credentials or nested causes to the error.
+
+The manifest generator accepts **offer IDs**, which can differ from the image/package ID.
+For the Google package, use `google-tasks` mapped to the complete deployment URL ending in
+`/tasks/mcp`. Its OAuth endpoints and scopes come from the service package's public metadata;
+there is no root `google` API-key offer. Existing one-service packages retain their IDs and
+authentication. A package declaring an OAuth endpoint must also supply provider defaults.
+The delivery extension is a coordinated discovery-v1 snapshot amendment: gateways must support
+it before the new source is enabled. Keep OAuth offers separate from an existing catalog until
+all consumers are compatible. Schema acceptance is not proof of a live OAuth connection.
+
+## Selected OAuth provider context
+
+An OAuth package can declare `oauthDefaults.providerExtraFields: ['api_domain']` in its public
+metadata. The catalog preserves that explicit selection; the gateway pins it on a managed
+preset, selects it from token responses and stores it encrypted with the user's credential.
+The only currently supported field is `api_domain`, an HTTPS origin without user information,
+query, fragment or an API path, at most 2,048 characters. A provider implementation must further
+restrict permitted provider hostnames before sending credentials to this origin.
+
+The optional `X-MCP-Upstream-Context` header carries unpadded canonical base64url UTF-8 JSON:
+`{"version":1,"providerExtras":{"api_domain":"https://tenant.example.test"}}`.
+The decoded envelope is limited to 4,096 bytes. The runtime validates the strict shape before
+creating a connector and supplies the selected values as `ApiKeyConfig.providerExtras`.
+The access token remains `ApiKeyConfig.apiKey`; the service bearer is never part of that object.
+Duplicate headers, malformed encodings, unknown fields and fields not declared by the OAuth
+endpoint are refused. The declaration is copied at registration and cannot be expanded by a
+later mutation of package metadata. Legacy API-key endpoints refuse context headers.
+
+This mechanism supplies provider context; it does not implement a new provider or register an
+OAuth application. Keep OAuth offers requiring it separate from consumers whose strict catalog
+schema predates the optional field, and install compatible gateway/runtime binaries first.
+
+
+## Synchronous OAuth tool budgets
+
+Google Tasks, Outlook, Microsoft Teams and the internal Slack bridge use `withToolCallDeadline` from the kit for one 20-second
+logical call budget, including provider preparation and multi-request work. The
+helper combines caller cancellation, a timer and monotonic checks. It races work
+that cannot observe cancellation, then prevents delayed DNS completion from
+dispatching HTTP after that scope has expired. Nested budgets cannot extend their
+parent. The standard runtime budget for unrelated long-running tools is unchanged.
+
+These OAuth clients pass `maxRedirects: 0` to `safeFetch`. Its own redirect loop
+is controlled by that option; `RequestInit.redirect` alone does not configure it.
+A service-owned bearer and a user's provider bearer must never be interchangeable.

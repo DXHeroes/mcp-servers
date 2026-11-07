@@ -26,3 +26,30 @@ Elastic License 2.0 and their NOTICE/provenance. Do not move or relicense those 
 Provider integration tests must use synthetic or dedicated accounts and never production data.
 Supply test secrets through the environment, keep them out of logs/receipts, and clean up only
 resources created by the test.
+
+## Adding an OAuth connector
+
+Start with the runnable [TypeScript OAuth template](../templates/typescript-oauth/README.md).
+It is part of the workspace build/typecheck/test gate and demonstrates a delegated Microsoft
+Graph read through the real connector runtime. The template is not a deployed catalog offer.
+
+Register one static HTTP endpoint and catalog offer per service, with `auth: 'oauth'`, explicit
+provider endpoints and minimum scopes. Document account eligibility, scope classification,
+administrator consent and any app-review restrictions. The gateway owns OAuth, client secrets
+and refresh; connectors accept only the user's current access token in `per_user` mode, separate
+from the connector service bearer. Never accept a shared OAuth fallback or put tokens in tool
+arguments, metadata or logs. Selected provider extras use the versioned, allowlisted
+[runtime context](runtime.md#selected-oauth-provider-context).
+
+Give tools stable service-prefixed names, strict input schemas and accurate read-only,
+destructive and idempotency annotations. Bound the complete logical call to 20 seconds, including
+pagination, retries and body reads. Keep provider URLs pinned and validate continuations; a page
+token must never turn into an arbitrary fetch URL. Report only definite upstream credential
+refusals with the canonical reconnect signal. Missing scope, throttles, timeouts and uncertain
+writes must retain their own error behavior and must not cause unsafe write replay.
+
+Use scrubbed/adapted provider recordings or synthetic fixtures at the provider boundary; verify
+the complete operation surface, two accounts, expired/revoked tokens, throttling, cancellation
+and safe errors through actual MCP HTTP. Record live dedicated-account read/write/readback and
+gateway acceptance separately. A passing synthetic test, image build or catalog-schema check
+does not prove provider admission, app approval or a published release.

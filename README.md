@@ -1,6 +1,6 @@
 # DX Heroes MCP servers
 
-Public source for seven deployable MCP connectors, an authenticated standalone runtime, a catalog
+Public source for independently deployable MCP connectors, an authenticated standalone runtime, a catalog
 service, and an optional trusted polyglot bundle. The normal deployment is one container per MCP
 server. The bundle is for administrator-reviewed projects that deliberately share one container
 security boundary.
@@ -33,6 +33,11 @@ An ordinary REST API is not MCP; import its OpenAPI description in Local MCP Gat
 | Merk | `ghcr.io/dxheroes/mcp-merk` | Czech and Slovak company intelligence |
 | PostgreSQL | `ghcr.io/dxheroes/mcp-postgres` | Bounded read and explicit write SQL tools |
 | Toggl Track | `ghcr.io/dxheroes/mcp-toggl` | Time tracking and reports |
+| Google Tasks | Local build; first release pending | Per-user OAuth task lists and tasks at `/tasks/mcp` |
+| Google Contacts / Directory | Local build; first release pending | Contact read/write at `/contacts/mcp`, Workspace-only search at `/directory/mcp` |
+| Outlook | Local build; first release pending | Personal/work mail at `/mail/mcp`, calendar at `/calendar/mcp` |
+| Microsoft Teams | Local build; first release pending | Work/school chats and channels at `/mcp` |
+| Slack | Local build; internal pilot only | Per-user Web API bridge; official MCP is the migration target |
 | Catalog | `ghcr.io/dxheroes/mcp-catalog` | Validated discovery offers |
 | Trusted bundle | `ghcr.io/dxheroes/mcp-bundle` | Optional prepared multi-language services |
 
@@ -64,7 +69,7 @@ docker run --rm --read-only --user 12345:12345 --cap-drop ALL \
 curl -fsS -H "Authorization: Bearer $MCP_ACCESS_TOKEN" http://127.0.0.1:8080/health
 ```
 
-For a credentialed connector, provision `MCP_UPSTREAM_CREDENTIAL` separately from
+For an API-key connector, provision `MCP_UPSTREAM_CREDENTIAL` separately from
 `MCP_ACCESS_TOKEN`. Prefer `_FILE` variables and a read-only secret mount in deployments. Never put
 either value in a catalog manifest, image, Git repository, command argument, or URL.
 

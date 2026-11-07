@@ -1,6 +1,7 @@
 packages:
   - packages/*
   - connectors/*
+  - templates/typescript-oauth
 
 overrides:
   zod: 4.4.3

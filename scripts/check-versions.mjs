@@ -25,7 +25,7 @@ for (const server of catalogFixture.servers) {
     failures.push(`catalog fixture ${server.id}: expected ${expected}, found ${server.version}`);
 }
 
-for (const name of ['kit', 'runtime', 'catalog', 'bundle']) {
+for (const name of ['kit', 'runtime', 'catalog', 'bundle', 'graph']) {
   const pkg = await readJson(new URL(`../packages/${name}/package.json`, import.meta.url));
   if (!/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/.test(pkg.version))
     failures.push(`${pkg.name}: invalid independent version ${pkg.version}`);

@@ -6,7 +6,7 @@ const schema = await readFile(
 );
 if (
   createHash('sha256').update(schema).digest('hex') !==
-  '06b076aecf5b347ea0ab9503f351afcc1a63e07a762d99bda0c409dbce3c73ec'
+  '170252b8bc65bf2fe4dd499c7e132fae0db23a51c3ad3b815c19c2c59ccda71f'
 )
   throw new Error('Frozen discovery schema drift');
 console.log('Frozen discovery v1 schema verified');

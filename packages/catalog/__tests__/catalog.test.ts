@@ -83,3 +83,46 @@ it('serves only valid snapshots and fails discovery/readiness during invalid upd
   await writeFile(file, fixture);
   expect((await get()).status).toBe(200);
 });
+
+it('accepts per-user OAuth connector offers and rejects shared or mixed delivery', () => {
+  const data = JSON.parse(fixture);
+  const auth = {
+    type: 'oauth',
+    credentialDelivery: 'connector_base64url',
+    credentialModes: ['per_user'],
+  };
+  data.servers[0].auth = auth;
+  expect(parseManifest(JSON.stringify(data)).servers[0]?.auth.type).toBe('oauth');
+  for (const modes of [['shared'], ['shared', 'per_user']]) {
+    data.servers[0].auth = { ...auth, credentialModes: modes };
+    expect(() => parseManifest(JSON.stringify(data))).toThrow('invalid_manifest');
+  }
+});
+
+it('accepts only explicit safe provider metadata selection on OAuth connector offers', () => {
+  for (const [fields, delivery, valid] of [
+    [['api_domain'], 'connector_base64url', true],
+    [['refresh_token'], 'connector_base64url', false],
+    [['api_domain', 'api_domain'], 'connector_base64url', false],
+    [['api_domain'], undefined, false],
+  ] as const) {
+    const data = JSON.parse(fixture);
+    data.servers[0].auth = {
+      type: 'oauth',
+      credentialModes: ['per_user'],
+      ...(delivery ? { credentialDelivery: delivery } : {}),
+      oauthDefaults: {
+        authorizationServerUrl: 'https://oauth.example.test',
+        authorizationEndpoint: 'https://oauth.example.test/authorize',
+        tokenEndpoint: 'https://oauth.example.test/token',
+        scopes: [],
+        providerExtraFields: fields,
+      },
+    };
+    if (valid)
+      expect(
+        parseManifest(JSON.stringify(data)).servers[0]!.auth.oauthDefaults?.providerExtraFields,
+      ).toEqual(fields);
+    else expect(() => parseManifest(JSON.stringify(data))).toThrow('invalid_manifest');
+  }
+});

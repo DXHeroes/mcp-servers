@@ -3,11 +3,13 @@ import type { McpPackage } from '@dxheroes/mcp-kit';
 import { serveStdio } from '@modelcontextprotocol/server/stdio';
 import { createAdapter } from './adapter.js';
 import { loadConfig, readSecret } from './config.js';
+import type { ConnectorEndpoint } from './endpoints.js';
 import { createConnectorHttpServer } from './http.js';
 
 export async function runConnectorCli(
   pkg: McpPackage,
   args = process.argv.slice(2),
+  endpoints?: readonly ConnectorEndpoint[],
 ): Promise<void> {
   // Connector diagnostics must never share stdout with JSON-RPC.
   globalThis.console = new Console(process.stderr, process.stderr);
@@ -16,6 +18,7 @@ export async function runConnectorCli(
       throw new Error('Usage: --stdio | --http');
     let close: () => Promise<void>;
     if (args[0] === '--stdio') {
+      if (endpoints) throw new Error('Service endpoints require HTTP mode');
       const secret = await readSecret(process.env, 'MCP_UPSTREAM_CREDENTIAL');
       const adapters = new Set<ReturnType<typeof createAdapter>>();
       const connectors = new Set<ReturnType<McpPackage['createServer']>>();
@@ -39,7 +42,7 @@ export async function runConnectorCli(
       });
     } else {
       const config = await loadConfig();
-      const runtime = createConnectorHttpServer(pkg, config);
+      const runtime = createConnectorHttpServer(pkg, config, endpoints);
       await new Promise<void>((resolve, reject) => {
         runtime.server.once('error', reject);
         runtime.server.listen(config.port, config.host, resolve);

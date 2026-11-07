@@ -6,6 +6,7 @@ import { createMcpHandler } from '@modelcontextprotocol/server';
 import { createAdapter } from './adapter.js';
 import { authenticate, HttpFailure, resolveCredential } from './auth.js';
 import type { RuntimeConfig } from './config.js';
+import { type ConnectorEndpoint, connectorEndpoints } from './endpoints.js';
 
 export function safeFailure(res: ServerResponse, status: number, code: string): void {
   if (res.headersSent) {
@@ -35,7 +36,12 @@ export async function readBody(req: IncomingMessage, maxBytes: number): Promise<
     throw new HttpFailure(400, 'invalid_json');
   }
 }
-export function createConnectorHttpServer(pkg: McpPackage, config: RuntimeConfig) {
+export function createConnectorHttpServer(
+  pkg: McpPackage,
+  config: RuntimeConfig,
+  endpoints?: readonly ConnectorEndpoint[],
+) {
+  const routes = connectorEndpoints(pkg, endpoints);
   const pending = new Set<Promise<void>>();
   const shutdown = new AbortController();
   setMaxListeners(256, shutdown.signal);
@@ -52,15 +58,21 @@ export function createConnectorHttpServer(pkg: McpPackage, config: RuntimeConfig
           res.end('{"status":"ready"}');
           return;
         }
-        if (req.url !== '/mcp') throw new HttpFailure(404, 'not_found');
+        const endpoint = routes.get(req.url ?? '');
+        if (!endpoint) throw new HttpFailure(404, 'not_found');
         authenticate(req, config);
         if (pending.size >= 128) throw new HttpFailure(503, 'capacity_reached');
-        const credential = resolveCredential(req, config);
+        const credential = resolveCredential(
+          req,
+          config,
+          endpoint.auth,
+          endpoint.providerExtraFields,
+        );
         if (req.method !== 'POST') throw new HttpFailure(405, 'method_not_allowed');
         const body = await readBody(req, config.maxBodyBytes);
         handler = createMcpHandler(
           async () => {
-            const connector = pkg.createServer(credential);
+            const connector = endpoint.package.createServer(credential);
             let closed = false;
             dispose = async () => {
               if (!closed) {
@@ -69,7 +81,7 @@ export function createConnectorHttpServer(pkg: McpPackage, config: RuntimeConfig
               }
             };
             await connector.initialize();
-            const adapter = createAdapter(pkg, connector, config);
+            const adapter = createAdapter(endpoint.package, connector, config);
             drain = adapter.drainOperations;
             return adapter;
           },

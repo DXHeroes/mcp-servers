@@ -7,19 +7,8 @@ const read = (path) => readFile(new URL(path, root), 'utf8');
 
 test('release tags select exactly one independently versioned image', async () => {
   const workflow = await read('.github/workflows/release.yml');
-  for (const id of [
-    'abra-flexi',
-    'byzdata',
-    'fakturoid',
-    'gemini-deep-research',
-    'merk',
-    'postgres',
-    'toggl',
-    'catalog',
-    'bundle',
-  ]) {
-    assert.match(workflow, new RegExp(`'${id}-v\\*'`));
-  }
+  assert.ok(workflow.includes("'*-v*'"));
+  assert.match(workflow, /node scripts\/release-target\.mjs/);
   assert.match(
     workflow,
     /IMAGE: ghcr\.io\/dxheroes\/mcp-\$\{\{ needs\.validate\.outputs\.component \}\}/,
