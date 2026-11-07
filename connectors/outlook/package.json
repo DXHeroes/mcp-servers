@@ -1,6 +1,6 @@
 {
   "name": "@dxheroes/mcp-outlook",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "Outlook mail and calendar MCP endpoints for personal and work Microsoft accounts",
   "type": "module",
@@ -40,7 +40,7 @@
     "directory": "connectors/outlook"
   },
   "dependencies": {
-    "zod": "4.4.3",
+    "zod": "4.6.6",
     "@dxheroes/mcp-kit": "workspace:*",
     "@dxheroes/mcp-runtime": "workspace:*",
     "@dxheroes/mcp-graph": "workspace:*"
@@ -48,7 +48,7 @@
   "devDependencies": {
     "typescript": "5.9.3",
     "vitest": "4.1.11",
-    "@modelcontextprotocol/client": "2.0.0"
+    "@modelcontextprotocol/client": "2.4.0"
   },
   "bin": {
     "mcp-outlook": "./dist/cli.js"

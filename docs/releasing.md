@@ -16,6 +16,10 @@ only that component's image:
 - `ghcr.io/dxheroes/mcp-merk`
 - `ghcr.io/dxheroes/mcp-postgres`
 - `ghcr.io/dxheroes/mcp-toggl`
+- `ghcr.io/dxheroes/mcp-google`
+- `ghcr.io/dxheroes/mcp-outlook`
+- `ghcr.io/dxheroes/mcp-microsoft-teams`
+- `ghcr.io/dxheroes/mcp-slack`
 - `ghcr.io/dxheroes/mcp-catalog`
 - `ghcr.io/dxheroes/mcp-bundle`
 
@@ -24,7 +28,9 @@ The selected image is built from the tagged checkout in two native jobs: linux/a
 immutable digest subject without version tags and uploads an image/architecture/version-specific
 receipt bound to the source revision. The merge job requires both distinct platform receipts from
 that revision and passes their digest references to `docker buildx imagetools create`. It merges
-whole attested indexes, preserving attestation descriptors; only this job publishes version tags.
+whole attested indexes, preserving attestation descriptors. The merged candidate uses a unique
+`build-<run-id>-<attempt>` tag. Only after both scans and signing succeed does the job promote the
+verified digest to version tags, and it checks that promotion preserved the index digest.
 The final digest comes from the merge metadata, never from resolving a mutable tag.
 
 BuildKit attaches a
@@ -51,10 +57,10 @@ version; do not retarget its tag or rewrite published source history. Local chec
 hosted native builds or registry publication succeeded.
 
 No paid deployment follows a tag. Verify authenticated pulls, platform manifests, attestations,
-signature identity and scan artifacts first. New organization GHCR packages default private even
-when linked to a public source repository; access inheritance is not visibility. A package
-administrator must set only these new audited packages to public in each package's settings after
-the first publication. There is no documented package-visibility REST mutation to automate here.
+signature identity and scan artifacts first. Read each GHCR package's actual visibility; a public
+source repository or inherited permissions do not prove anonymous image access. If a new audited
+package is private, a package administrator sets only that package to public in its settings after
+the first verified publication. There is no documented package-visibility REST mutation to automate here.
 Finish with a truly unauthenticated registry-token/manifest pull so local Docker credentials cannot
 hide a private package. Do not change organization-wide defaults or unrelated package access.
 

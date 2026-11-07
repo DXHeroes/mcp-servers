@@ -68,5 +68,18 @@ export function checkNativeReleaseWorkflow(workflow) {
   requireIn(sign, 'steps.merge.outputs.digest', 'only the final index digest may be signed');
   if (publish.indexOf('cosign sign') < publish.indexOf('trivy image'))
     failures.push('signing must follow platform scans');
+  requireIn(
+    publish,
+    `--tag "$IMAGE:build-\${GITHUB_RUN_ID}-\${GITHUB_RUN_ATTEMPT}"`,
+    'unverified indexes must use a run-specific build tag',
+  );
+  const promotion = publish.indexOf('name: Promote verified version tags');
+  if (promotion < 0 || promotion < publish.indexOf('cosign sign'))
+    failures.push('version tags must be promoted only after scans and signing');
+  requireIn(
+    publish.slice(Math.max(promotion, 0)),
+    '"$IMAGE@$DIGEST"',
+    'promotion must consume the verified immutable index',
+  );
   return failures;
 }

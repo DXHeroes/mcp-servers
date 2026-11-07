@@ -132,16 +132,11 @@ jobs:
           merge-multiple: true
       - name: Assemble attested native subjects into the final index
         id: merge
-        env:
-          TAGS: ${{ steps.meta.outputs.tags }}
         run: |
           mkdir -p "release"
           node scripts/release-evidence.mjs sources "$IMAGE" "$GITHUB_SHA" receipts/*.json > "release/sources.txt"
           mapfile -t sources < "release/sources.txt"
-          mapfile -t tags <<< "$TAGS"
-          tag_args=()
-          for tag in "${tags[@]}"; do tag_args+=(--tag "$tag"); done
-          docker buildx imagetools create "${tag_args[@]}" --metadata-file "release/merge.json" "${sources[@]}"
+          docker buildx imagetools create --tag "$IMAGE:build-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" --metadata-file "release/merge.json" "${sources[@]}"
           digest=$(node scripts/release-evidence.mjs digest "release/merge.json")
           printf 'digest=%s\n' "$digest" >> "$GITHUB_OUTPUT"
       - name: Record digest metadata and validate the merged index
@@ -167,6 +162,16 @@ jobs:
         env:
           COSIGN_YES: 'true'
         run: cosign sign "$IMAGE@${{ steps.merge.outputs.digest }}"
+      - name: Promote verified version tags
+        env:
+          TAGS: ${{ steps.meta.outputs.tags }}
+          DIGEST: ${{ steps.merge.outputs.digest }}
+        run: |
+          mapfile -t tags <<< "$TAGS"
+          tag_args=()
+          for tag in "${tags[@]}"; do tag_args+=(--tag "$tag"); done
+          docker buildx imagetools create "${tag_args[@]}" --metadata-file release/promotion.json "$IMAGE@$DIGEST"
+          test "$(node scripts/release-evidence.mjs digest release/promotion.json)" = "$DIGEST"
       - if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:

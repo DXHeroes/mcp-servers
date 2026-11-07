@@ -1,6 +1,6 @@
 {
   "name": "@dxheroes/mcp-slack",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "Internal Slack Web API bridge with delegated user OAuth credentials",
   "type": "module",
@@ -39,14 +39,14 @@
     "directory": "connectors/slack"
   },
   "dependencies": {
-    "zod": "4.4.3",
+    "zod": "4.6.6",
     "@dxheroes/mcp-kit": "workspace:*",
     "@dxheroes/mcp-runtime": "workspace:*"
   },
   "devDependencies": {
     "typescript": "5.9.3",
     "vitest": "4.1.11",
-    "@modelcontextprotocol/client": "2.0.0"
+    "@modelcontextprotocol/client": "2.4.0"
   },
   "bin": {
     "mcp-slack": "./dist/cli.js"

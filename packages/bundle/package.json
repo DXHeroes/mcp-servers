@@ -29,9 +29,9 @@
   "dependencies": {
     "@dxheroes/mcp-runtime": "workspace:*",
     "@dxheroes/mcp-catalog": "workspace:*",
-    "@modelcontextprotocol/client": "2.0.0",
-    "@modelcontextprotocol/server": "2.0.0",
-    "@modelcontextprotocol/node": "2.0.0",
+    "@modelcontextprotocol/client": "2.4.0",
+    "@modelcontextprotocol/server": "2.4.0",
+    "@modelcontextprotocol/node": "2.1.2",
     "express": "5.2.1"
   },
   "devDependencies": {

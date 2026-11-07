@@ -142,12 +142,12 @@ for (const era of ['auto', 'legacy'] as const)
         shared = await client(url, era);
       const list = await a.listTools();
       expect(list.tools[0]?.inputSchema.properties?.nullable).toMatchObject({
-        anyOf: [{ type: 'number' }, { type: 'null' }],
+        type: ['number', 'null'],
       });
       expect(list.tools[0]?.annotations).toEqual({ readOnlyHint: true, destructiveHint: false });
       const results = await Promise.all([
-        a.callTool({ name: 'echo', arguments: { wait: 2 } }),
-        b.callTool({ name: 'echo' }),
+        a.callTool({ name: 'echo', arguments: { wait: 2, nullable: null } }),
+        b.callTool({ name: 'echo', arguments: { nullable: 7 } }),
         shared.callTool({ name: 'echo' }),
       ]);
       for (const [i, secret] of ['personal-á', 'personal-b', 'shared-test'].entries())

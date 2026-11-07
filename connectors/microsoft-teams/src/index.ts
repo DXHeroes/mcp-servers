@@ -7,7 +7,7 @@ export const mcpPackage: McpPackage = {
     name: 'Microsoft Teams',
     description:
       'Chats and channels for work or school Microsoft accounts; personal accounts cannot connect.',
-    version: '0.1.0',
+    version: '0.1.1',
     author: 'DX Heroes',
     license: 'MIT',
     requiresApiKey: false,

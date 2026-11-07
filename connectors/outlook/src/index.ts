@@ -15,7 +15,7 @@ export const mailPackage: McpPackage = {
     id: 'outlook-mail',
     name: 'Outlook Mail',
     description: 'Delegated Outlook mail for work, school and personal Microsoft accounts.',
-    version: '0.1.0',
+    version: '0.1.1',
     author: 'DX Heroes',
     license: 'MIT',
     requiresApiKey: false,
