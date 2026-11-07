@@ -41,3 +41,28 @@ Primary sources: [MCP request bounds](https://github.com/modelcontextprotocol/ty
 [Zod advisory](https://github.com/advisories/GHSA-mrhx-c7xc-m3w5),
 [Alpine 3.24 security database](https://secdb.alpinelinux.org/v3.24/main.json), and
 [Docker index copying](https://docs.docker.com/reference/cli/docker/buildx/imagetools/create/).
+
+
+## Published 0.1.1 evidence
+
+The corrected releases are built from `e9b05b90f9d8faae4862efbc5d995df060319917`.
+Each ran its own full check, native amd64/arm64 builds, zero-findings scans, signing and
+verified promotion. Independent anonymous manifest requests returned 200 and matched the
+recorded immutable digest; withdrawn `v0.1.0` manifests return 404. Cosign 3.1.3 verified each
+signature with an empty Docker credential configuration, the exact component tag workflow
+identity and GitHub Actions OIDC issuer.
+
+| Image at `ghcr.io/dxheroes/` | Immutable index digest | Native release |
+| --- | --- | --- |
+| `mcp-google:v0.1.1` | `sha256:8befe7873c84f071a4595e29a7f28db54fe98a43bd859287c254793dc4419bcb` | [passed](https://github.com/DXHeroes/mcp-servers/actions/runs/42372054302) |
+| `mcp-outlook:v0.1.1` | `sha256:1ce8a007ccc1e52ed6ca1d84bb5cc6e376362b176e735291d2443fd1d7b67aac` | [passed](https://github.com/DXHeroes/mcp-servers/actions/runs/42372056277) |
+| `mcp-microsoft-teams:v0.1.1` | `sha256:1c8b360d522d19aeda671e8e3a274fe43283bcd4119be8ca0e99262a2889f883` | [passed](https://github.com/DXHeroes/mcp-servers/actions/runs/42372057844) |
+| `mcp-slack:v0.1.1` | `sha256:5def7de0a47208ed5a6a4c6f0082d7210a5ab2036729b9a26897d99cfdae298e` | [passed](https://github.com/DXHeroes/mcp-servers/actions/runs/42372059565) |
+
+The published arm64 images were then pulled anonymously by digest and started as UID/GID
+65532, with a read-only filesystem, all capabilities dropped and no-new-privileges. Fourteen
+actual SDK sessions covered tools/list on all seven service endpoints in both protocol eras:
+Tasks 13 tools, Contacts 7, directory 1, Outlook mail 14/calendar 8, Teams 10 and Slack 9.
+All four containers were removed. OCI revision labels matched the source above. This is
+published-artifact and static metadata acceptance, not a live Google/Microsoft/Slack user
+connection, read/write result, or the gateway/product preview matrix.
