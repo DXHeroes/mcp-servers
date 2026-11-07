@@ -75,7 +75,7 @@ Gmail, Calendar or Drive, and is not a hybrid official/custom Contacts endpoint.
 | --- | --- | --- | --- |
 | `google-contacts` | `/contacts/mcp` | `https://www.googleapis.com/auth/contacts` | Sensitive; personal and Workspace contact read/write |
 | Read-only alternative, not a separate deployed offer | Same People read APIs | `https://www.googleapis.com/auth/contacts.readonly` | Sensitive; insufficient for this offer's writes |
-| `google-directory` | `/directory/mcp` | `https://www.googleapis.com/auth/directory.readonly` | Workspace domain directory only; treat as sensitive pending confirmation in the app's Data Access page |
+| `google-directory` | `/directory/mcp` | `https://www.googleapis.com/auth/directory.readonly` | Sensitive (confirmed in Data Access on 2026-11-07); Workspace domain directory only |
 
 The full `contacts` grant already covers reads, so the write offer does not request
 the redundant `contacts.readonly` grant. It never adds directory permissions to a
