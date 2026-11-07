@@ -11,9 +11,11 @@ Using Graph directly still requires the permissions and tenant consent below.
 
 ## Register the application
 
-1. Register a Microsoft Entra application for **accounts in any organizational directory**, excluding
-   personal Microsoft accounts. Use the `organizations` authority, not `common` or `consumers`.
-   Both authorization and token endpoints are
+1. For a Teams-only registration, choose **accounts in any organizational directory**. A registration
+   shared with [Outlook](../outlook/README.md#register-and-connect) can instead support **any Entra ID
+   tenant and personal Microsoft accounts**. Keep Teams on the `organizations` authority in either
+   case; its narrower audience excludes personal accounts even when the registration supports them.
+   Both Teams authorization and token endpoints are
    `https://login.microsoftonline.com/organizations/oauth2/v2.0/{authorize|token}`.
 2. Add a **Web** redirect URI of `https://<gateway-host>/api/oauth/callback`, matching the gateway's
    exact public URL. Put the application client ID/secret only in its gateway OAuth configuration.
@@ -44,7 +46,8 @@ needed by risk-based consent policies. No setup, consent or verification has bee
    remove those messages using Teams afterward; this connector does not provide delete tools.
    Tenants/membership/license policies remain enforced by Graph.
 
-References: [authority audiences](https://learn.microsoft.com/en-us/entra/identity-platform/v2-protocols-oidc),
+References: [effective audience](https://learn.microsoft.com/en-us/entra/identity-platform/msal-client-application-configuration#effective-audience),
+[authority audiences](https://learn.microsoft.com/en-us/entra/identity-platform/v2-protocols-oidc),
 [register an app](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app),
 [permission/admin-consent reference](https://learn.microsoft.com/en-us/graph/permissions-reference),
 [basic directory lookup](https://learn.microsoft.com/en-us/graph/api/user-list?view=graph-rest-1.0).
@@ -52,8 +55,10 @@ References: [authority audiences](https://learn.microsoft.com/en-us/entra/identi
 ## Deployment and authentication
 
 Build with `pnpm build`; run `node connectors/microsoft-teams/dist/cli.js --http`. The independent
-image tag is `microsoft-teams-v<package-version>`; first signed multiarch release is pending. The
-runtime requires its service bearer and explicit `per_user` mode with the canonical base64url
+image tag is `microsoft-teams-v<package-version>`; the first verified signed multiarch image is
+`ghcr.io/dxheroes/mcp-microsoft-teams:v0.1.1`. See the [release evidence](../../docs/security-release-2026-11-07.md#published-011-evidence)
+for its immutable digest and verification scope. Provider-account acceptance remains pending.
+The runtime requires its service bearer and explicit `per_user` mode with the canonical base64url
 access token in `X-MCP-Upstream-Credential`; shared mode is refused. See [runtime](../../docs/runtime.md).
 No service bearer is forwarded to Graph. The catalog deployment map is:
 
