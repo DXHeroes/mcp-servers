@@ -33,17 +33,22 @@ An ordinary REST API is not MCP; import its OpenAPI description in Local MCP Gat
 | Merk | `ghcr.io/dxheroes/mcp-merk` | Czech and Slovak company intelligence |
 | PostgreSQL | `ghcr.io/dxheroes/mcp-postgres` | Bounded read and explicit write SQL tools |
 | Toggl Track | `ghcr.io/dxheroes/mcp-toggl` | Time tracking and reports |
-| Google Tasks | Local build; first release pending | Per-user OAuth task lists and tasks at `/tasks/mcp` |
-| Google Contacts / Directory | Local build; first release pending | Contact read/write at `/contacts/mcp`, Workspace-only search at `/directory/mcp` |
-| Outlook | Local build; first release pending | Personal/work mail at `/mail/mcp`, calendar at `/calendar/mcp` |
-| Microsoft Teams | Local build; first release pending | Work/school chats and channels at `/mcp` |
-| Slack | Local build; internal pilot only | Per-user Web API bridge; official MCP is the migration target |
+| Google Tasks | `ghcr.io/dxheroes/mcp-google:v0.1.1` | Per-user OAuth task lists and tasks at `/tasks/mcp` |
+| Google Contacts / Directory | `ghcr.io/dxheroes/mcp-google:v0.1.1` | Contact read/write at `/contacts/mcp`, Workspace-only search at `/directory/mcp` |
+| Outlook | `ghcr.io/dxheroes/mcp-outlook:v0.1.1` | Personal/work mail at `/mail/mcp`, calendar at `/calendar/mcp` |
+| Microsoft Teams | `ghcr.io/dxheroes/mcp-microsoft-teams:v0.1.1` | Work/school chats and channels at `/mcp` |
+| Slack | `ghcr.io/dxheroes/mcp-slack:v0.1.1` | Internal pilot only; official MCP is the external migration target |
 | Catalog | `ghcr.io/dxheroes/mcp-catalog` | Validated discovery offers |
 | Trusted bundle | `ghcr.io/dxheroes/mcp-bundle` | Optional prepared multi-language services |
 
 Connector-specific credentials, permissions, tool names and limitations are documented in each
 `connectors/<id>/README.md`. Runtime details are in [docs/runtime.md](docs/runtime.md), and the two
 deployment shapes are explained in [docs/architecture.md](docs/architecture.md).
+
+The OAuth images have verified native builds, scans, signatures and anonymous pulls;
+[release evidence and immutable digests](docs/security-release-2026-11-07.md) are recorded separately
+from the still-pending real-account and gateway/product acceptance. Publication does not establish
+provider admission or authorize public commercial use of the internal Slack pilot.
 
 ## Local quickstart
 
