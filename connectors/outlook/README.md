@@ -20,6 +20,9 @@ route in [issue #9](https://github.com/DXHeroes/mcp-servers/issues/9).
 
 1. In Microsoft Entra **App registrations**, register an app with **Any Entra ID Tenant + Personal
    Microsoft accounts**. A tenant-only or organizations-only app does not cover personal accounts.
+   This registration can also serve [Teams](../microsoft-teams/README.md#register-the-application):
+   keep Outlook on `common` and Teams on `organizations`, with each preset requesting only its own
+   delegated scopes. The Teams authority narrows the registration's audience to work/school accounts.
 2. Add a **Web** redirect URI of `https://<gateway-host>/api/oauth/callback`, exactly matching the
    gateway's public origin and callback. Create a client secret for the gateway and keep its value
    only in the gateway's encrypted OAuth configuration. Never put it in the connector or catalog.
@@ -54,7 +57,9 @@ stay separate. See [runtime configuration](../../docs/runtime.md). A catalog dep
 Generate with `node scripts/catalog-manifest.mjs <deployment-map.json>` after building. Import
 only into a gateway with connector OAuth/managed-preset support; writes also require the gateway
 preset's integrator-write permission. The independent image tag is `outlook-v<package-version>`;
-its first signed multiarch release and deployment are pending.
+the first verified signed multiarch image is `ghcr.io/dxheroes/mcp-outlook:v0.1.1`. See the
+[release evidence](../../docs/security-release-2026-11-07.md#published-011-evidence) for its immutable
+digest and verification scope. Provider-account acceptance remains pending.
 
 ## Mail tools
 
