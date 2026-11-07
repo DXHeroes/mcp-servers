@@ -7,7 +7,7 @@ export const mcpPackage: McpPackage = {
     name: 'Slack (internal bridge)',
     description:
       'Internal Slack Web API pilot with delegated user tokens; migrate to the official Slack MCP server after provider approval.',
-    version: '0.1.0',
+    version: '0.1.1',
     author: 'DX Heroes',
     license: 'MIT',
     requiresApiKey: false,

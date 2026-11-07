@@ -59,6 +59,18 @@ for (const file of [
     ['OIDC in build job', (s) => s.replace('  build:\n', '  build:\n    id-token: write\n')],
     ['missing signature', (s) => s.replace('run: cosign sign', 'run: echo')],
     [
+      'version tag before verification',
+      (s) =>
+        s.replace(
+          `--tag "$IMAGE:build-\${GITHUB_RUN_ID}-\${GITHUB_RUN_ATTEMPT}"`,
+          '--tag "$IMAGE:v$VERSION"',
+        ),
+    ],
+    [
+      'missing verified promotion',
+      (s) => s.replace('name: Promote verified version tags', 'name: Bypass verified promotion'),
+    ],
+    [
       'missing zero-findings gate',
       (s) =>
         s
@@ -67,7 +79,9 @@ for (const file of [
     ],
   ]) {
     test(`${file} rejects ${name}`, () => {
-      assert.ok(checkNativeReleaseWorkflow(mutate(workflow)).length > 0);
+      const mutated = mutate(workflow);
+      assert.notEqual(mutated, workflow);
+      assert.ok(checkNativeReleaseWorkflow(mutated).length > 0);
     });
   }
 }

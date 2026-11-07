@@ -8,7 +8,7 @@ export const mcpPackage: McpPackage = {
     id: 'google',
     name: 'Google Tasks',
     description: 'Task lists and tasks for personal and Workspace accounts using delegated OAuth.',
-    version: '0.1.0',
+    version: '0.1.1',
     author: 'DX Heroes',
     license: 'MIT',
     requiresApiKey: false,

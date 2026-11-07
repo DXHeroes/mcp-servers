@@ -24,7 +24,7 @@
     {
       "id": "byzdata",
       "name": "ByzData",
-      "description": "Czech business registry MCP — search companies, check health, insolvency, relations, documents from ARES, Justice.cz, and ISIR. 9 tools for comprehensive Czech company data analysis.",
+      "description": "Czech business registry MCP \u2014 search companies, check health, insolvency, relations, documents from ARES, Justice.cz, and ISIR. 9 tools for comprehensive Czech company data analysis.",
       "version": "0.1.1",
       "endpoint": {
         "transport": "streamable-http",
@@ -52,7 +52,7 @@
         "defaultCredentialMode": "shared",
         "credentialDelivery": "connector_base64url",
         "credentialLabel": "Client credentials",
-        "apiKeyHint": "Format: slug:client_id:client_secret. Get your OAuth Client Credentials at Settings > User Account (Nastavení > Uživatelský účet) in your Fakturoid account. The slug is your account URL (e.g., \"mycompany\" from mycompany.fakturoid.cz)."
+        "apiKeyHint": "Format: slug:client_id:client_secret. Get your OAuth Client Credentials at Settings > User Account (Nastaven\u00ed > U\u017eivatelsk\u00fd \u00fa\u010det) in your Fakturoid account. The slug is your account URL (e.g., \"mycompany\" from mycompany.fakturoid.cz)."
       },
       "docsUrl": "https://www.fakturoid.cz/api/v3",
       "author": "DX Heroes"
@@ -79,7 +79,7 @@
     {
       "id": "merk",
       "name": "Merk",
-      "description": "Czech and Slovak company data — financials, relations, employees, fleet, and more.",
+      "description": "Czech and Slovak company data \u2014 financials, relations, employees, fleet, and more.",
       "version": "0.1.1",
       "endpoint": {
         "transport": "streamable-http",
@@ -110,7 +110,7 @@
         "defaultCredentialMode": "shared",
         "credentialDelivery": "connector_base64url",
         "credentialLabel": "Connection string",
-        "apiKeyHint": "Two accepted forms. (1) URL: postgresql://user:password@host:5432/dbname?sslmode=require (postgres:// works too). (2) Keyword form, fields separated by spaces or semicolons: host=db.example.com port=5432 dbname=mydb user=myuser password=secret sslmode=require. Required: host, dbname, user. Defaults: port=5432 and sslmode=prefer. What prefer does, exactly: it attempts an encrypted connection and drops to an unencrypted one only if the server itself reports that it has no TLS support — but it verifies no certificate, so it is not protection against someone who can intercept the connection (they can force the unencrypted fallback). Use sslmode=require to refuse an unencrypted connection, and verify-full to also verify the certificate the server presents. Accepted sslmode: disable, allow, prefer, require, verify-ca, verify-full (allow behaves like prefer here; it tries TLS first). For a database whose certificate comes from a private or internal CA, add sslrootcert=<PEM certificate(s), base64url-encoded> (a bundle of several concatenated certificates is fine) and sslmode=verify-full; without it, verify-ca/verify-full trust only the system CA store. Note: the database host is part of this credential, so with per-user credentials each user chooses their own database server."
+        "apiKeyHint": "Two accepted forms. (1) URL: postgresql://user:password@host:5432/dbname?sslmode=require (postgres:// works too). (2) Keyword form, fields separated by spaces or semicolons: host=db.example.com port=5432 dbname=mydb user=myuser password=secret sslmode=require. Required: host, dbname, user. Defaults: port=5432 and sslmode=prefer. What prefer does, exactly: it attempts an encrypted connection and drops to an unencrypted one only if the server itself reports that it has no TLS support \u2014 but it verifies no certificate, so it is not protection against someone who can intercept the connection (they can force the unencrypted fallback). Use sslmode=require to refuse an unencrypted connection, and verify-full to also verify the certificate the server presents. Accepted sslmode: disable, allow, prefer, require, verify-ca, verify-full (allow behaves like prefer here; it tries TLS first). For a database whose certificate comes from a private or internal CA, add sslrootcert=<PEM certificate(s), base64url-encoded> (a bundle of several concatenated certificates is fine) and sslmode=verify-full; without it, verify-ca/verify-full trust only the system CA store. Note: the database host is part of this credential, so with per-user credentials each user chooses their own database server."
       },
       "docsUrl": "https://www.postgresql.org/docs/current/libpq-connect.html",
       "author": "DX Heroes"
