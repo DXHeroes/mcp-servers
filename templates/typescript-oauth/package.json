@@ -1,0 +1,23 @@
+{
+  "name": "@dxheroes/mcp-oauth-template",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Runnable delegated OAuth connector example using Microsoft Graph",
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc --build",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit -p tsconfig.test.json"
+  },
+  "dependencies": {
+    "@dxheroes/mcp-graph": "workspace:*",
+    "@dxheroes/mcp-kit": "workspace:*",
+    "@dxheroes/mcp-runtime": "workspace:*",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/client": "2.0.0",
+    "vitest": "4.1.11"
+  }
+}

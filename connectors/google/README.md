@@ -15,9 +15,13 @@ per-user managed preset, request offline access for refresh, and let the gateway
 renew credentials. The connector does not receive the client secret or refresh token.
 
 The Tasks write scope is `https://www.googleapis.com/auth/tasks`; it covers reads as well.
-It is not a restricted scope. Confirm its current sensitive/non-sensitive classification in
-the project's consent configuration and complete any required app verification before public
-rollout. This package does not claim that registration or verification has been completed.
+It is a **sensitive** scope, as confirmed in Google Auth Platform's Data Access page on
+2026-11-07; it is not a restricted scope. Complete the applicable sensitive-scope verification
+before public rollout. Recheck the classification in the operator's project when configuring
+it: Google's [scope documentation](https://developers.google.com/identity/protocols/oauth2/scopes)
+identifies the console as the source of sensitive-scope indicators. Tasks alone does not add a
+restricted-scope CASA requirement; other grants in the same app need their own assessment.
+This package does not claim that registration or verification has been completed.
 Google's official Workspace MCP services do not currently offer a Tasks endpoint; this package
 implements the Tasks REST API directly, without an integration aggregator.
 
