@@ -21,7 +21,7 @@ export class GoogleApiError extends Error {
 export class GoogleClient {
   constructor(
     private readonly accessToken: string,
-    private readonly service: 'tasks' | 'people' = 'tasks',
+    private readonly service: 'tasks' | 'people' | 'gmail' = 'tasks',
   ) {
     if (
       !accessToken ||
@@ -39,7 +39,9 @@ export class GoogleClient {
     const base =
       this.service === 'people'
         ? 'https://people.googleapis.com/v1/'
-        : 'https://tasks.googleapis.com/tasks/v1/';
+        : this.service === 'gmail'
+          ? 'https://gmail.googleapis.com/gmail/v1/'
+          : 'https://tasks.googleapis.com/tasks/v1/';
     const url = new URL(`${base}${path}`);
     const origin = new URL(base);
     if (

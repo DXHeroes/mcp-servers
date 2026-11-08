@@ -2,13 +2,14 @@
 import type { McpPackage } from '@dxheroes/mcp-kit';
 import type { ConnectorEndpoint } from '@dxheroes/mcp-runtime';
 import { GoogleContactsServer, GoogleDirectoryServer } from './contacts.js';
+import { GoogleGmailServer } from './gmail.js';
 import { GoogleTasksServer } from './tasks.js';
 export const mcpPackage: McpPackage = {
   metadata: {
     id: 'google',
     name: 'Google Tasks',
     description: 'Task lists and tasks for personal and Workspace accounts using delegated OAuth.',
-    version: '0.1.1',
+    version: '0.2.0',
     author: 'DX Heroes',
     license: 'MIT',
     requiresApiKey: false,
@@ -62,11 +63,28 @@ export const directoryPackage: McpPackage = {
   },
   createServer: (credential) => new GoogleDirectoryServer(credential),
 };
+export const gmailPackage: McpPackage = {
+  ...tasksPackage,
+  metadata: {
+    ...tasksPackage.metadata,
+    id: 'google-gmail-send',
+    name: 'Gmail Send',
+    description: 'Send email and replies for personal and Workspace accounts. No mailbox reads.',
+    docsUrl: 'https://developers.google.com/workspace/gmail/api/guides/sending',
+    oauthDefaults: {
+      ...tasksPackage.metadata.oauthDefaults!,
+      scopes: ['https://www.googleapis.com/auth/gmail.send'],
+    },
+  },
+  createServer: (credential) => new GoogleGmailServer(credential),
+};
 export const endpoints: readonly ConnectorEndpoint[] = [
   { path: '/tasks/mcp', package: tasksPackage, auth: 'oauth' },
   { path: '/contacts/mcp', package: contactsPackage, auth: 'oauth' },
   { path: '/directory/mcp', package: directoryPackage, auth: 'oauth' },
+  { path: '/gmail/mcp', package: gmailPackage, auth: 'oauth' },
 ];
 export { GoogleContactsServer, GoogleDirectoryServer } from './contacts.js';
+export { GoogleGmailServer } from './gmail.js';
 export { GoogleTasksServer } from './tasks.js';
 export default mcpPackage;
