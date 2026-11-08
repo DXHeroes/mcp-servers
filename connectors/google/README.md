@@ -2,7 +2,8 @@
 
 Independent HTTP service endpoints using the user's access token supplied by a gateway.
 Google Tasks uses `/tasks/mcp`, Contacts uses `/contacts/mcp`, and the separate Workspace
-directory offer uses `/directory/mcp`. `/mcp` and stdio are deliberately not exposed for this
+directory offer uses `/directory/mcp`. Gmail's send-only offer uses `/gmail/mcp`.
+`/mcp` and stdio are deliberately not exposed for this
 multi-service package. Source is MIT; the shared kit retains its license.
 
 ## Authentication and setup
@@ -63,6 +64,82 @@ The package ID `google` is not a catalog offer alias. Only enable that source af
 gateway supports connector OAuth and managed presets; do not substitute an API-key offer.
 
 API reference: <https://developers.google.com/workspace/tasks/reference/rest>.
+
+## Gmail: Wave 1, send only
+
+The official Gmail MCP server admitted both personal and Workspace test accounts on
+2026-11-08, but its 23 advertised tools included no sending operation. That live
+inventory satisfies [issue #6](https://github.com/DXHeroes/mcp-servers/issues/6)'s
+missing-sending prerequisite. This implementation adds that capability as a separate
+`google-gmail-send` catalog offer at `/gmail/mcp`. It is shared connector infrastructure,
+with no gateway edition restriction. Existing official read connections remain available.
+
+Enable the Gmail API and use the common per-user Web OAuth setup above. The offer
+requests **only** `https://www.googleapis.com/auth/gmail.send`, a **sensitive** scope.
+Both tools use that grant:
+
+| Tool | Behavior | Scope / class |
+| --- | --- | --- |
+| `gmail_send_message` | Send a new message, with To, Cc, Bcc, plain text, HTML and base64 attachments | `gmail.send` / sensitive |
+| `gmail_reply_message` | Send into an existing thread using caller-supplied threading headers | `gmail.send` / sensitive |
+
+Both tools change external state and are non-idempotent. The gateway's approval and
+integrator write policy still apply. This scope does not itself introduce restricted-scope
+CASA requirements. The app still needs applicable sensitive-scope verification for public
+rollout; the operator's shared app must separately assess its other grants.
+[Google's scope classification](https://developers.google.com/workspace/gmail/api/auth/scopes)
+lists `gmail.readonly` and `gmail.compose` as restricted. Wave 2 mailbox reads and draft
+management are **not implemented or advertised** by this offer. Their separate offer and
+public release remain dependent on the requesting app's restricted-scope review and,
+where required, security assessment. Internal testing consent does not satisfy that gate.
+
+Inputs use bare ASCII email addresses, not display-name address syntax. Supply `from`
+as the authenticated mailbox or an authorized send-as alias; Google enforces sender
+permission. At least one of `to`, `cc`, `bcc` must contain a recipient (100 total maximum),
+and at least one of `text` or `html` must be supplied. Both bodies produce MIME alternatives.
+Up to ten attachments use `filename`, `contentType` and canonical padded `contentBase64`.
+The combined UTF-8 body and decoded attachment content is limited to **1 MiB** for this
+interactive endpoint. The shared runtime separately caps the entire incoming JSON request
+at 2 MiB. Filenames are UTF-8 RFC 2231 parameters; subjects are RFC 2047 encoded words.
+Header controls, malformed base64, extra fields and over-limit content are refused before
+any send. Attachments are bytes supplied by the caller; the connector reads no local files
+or remote attachment URLs.
+
+For a reply supply `threadId` (Gmail's opaque thread ID), `inReplyTo` (the original
+**RFC Message-ID header**, including angle brackets), and `references` (the existing chain
+followed by that same original Message-ID). These are different identifiers. Set `subject`
+to the original thread subject; this endpoint does not fetch, infer or change it. Google
+requires matching subjects and compliant References/In-Reply-To headers to thread replies.
+Only ordinary dot-atom Message-ID forms are accepted, not quoted local parts. Example:
+
+```json
+{"from":"sender@example.test","to":["recipient@example.test"],"subject":"Fixture thread","text":"Synthetic reply","threadId":"abc123","inReplyTo":"<original@example.test>","references":["<original@example.test>"]}
+```
+
+The only provider call is `POST /gmail/v1/users/me/messages/send` with base64url MIME
+and, for replies, `threadId`. A definite HTTP 401 signals reconnect. HTTP 403 remains a
+permission/provider error. Only definite short HTTP 429 refusals are retried; a long throttle
+returns `RATE_LIMITED`. Network errors, deadlines, malformed success responses and 5xx can
+mean that mail **was already sent**: they return `SEND_OUTCOME_UNKNOWN`. Do not automatically
+retry that outcome; reconcile using the mailbox/product before deciding to send again.
+The connector cannot perform that readback under `gmail.send`. No automatic resend follows
+an uncertain outcome.
+
+Catalog deployment map entry:
+
+```json
+{"google-gmail-send":"https://<connector-host>/gmail/mcp"}
+```
+
+Gmail tests use synthetic/adapted provider responses, not recordings of a live send.
+They cover MIME, validation, threading, retry/error behavior and two isolated credentials
+over actual MCP HTTP in both protocol eras. Live send/reply on both account kinds,
+gateway approvals, refresh/revocation, preview acceptance, image publication and p95
+acceptance remain open. No real email is sent by these tests.
+
+Primary references: [send endpoint](https://developers.google.com/workspace/gmail/api/reference/rest/v1/users.messages/send),
+[MIME message creation](https://developers.google.com/workspace/gmail/api/guides/sending),
+[threading requirements](https://developers.google.com/workspace/gmail/api/reference/rest/v1/users.messages#Message).
 
 ## Google Contacts and Workspace directory
 

@@ -16,6 +16,7 @@ test('generates OAuth service offers without a package-level API-key alias', asy
       JSON.stringify({
         'google-tasks': 'https://connector.example/tasks/mcp',
         toggl: 'https://toggl.example/mcp',
+        'google-gmail-send': 'https://connector.example/gmail/mcp',
       }),
     );
     const { stdout } = await exec(process.execPath, ['scripts/catalog-manifest.mjs', file]);
@@ -29,6 +30,11 @@ test('generates OAuth service offers without a package-level API-key alias', asy
     ]);
     assert.equal(offers[0].auth.oauthDefaults.authorizeParams.access_type, 'offline');
     assert.equal(offers[1].auth.type, 'api_key');
+    assert.equal(offers[2].id, 'google-gmail-send');
+    assert.equal(offers[2].auth.type, 'oauth');
+    assert.deepEqual(offers[2].auth.oauthDefaults.scopes, [
+      'https://www.googleapis.com/auth/gmail.send',
+    ]);
     for (const map of [
       { google: 'https://connector.example/mcp' },
       { unknown: 'https://connector.example/mcp' },
