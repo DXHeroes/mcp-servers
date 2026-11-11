@@ -293,3 +293,57 @@ it('propagates an attachment container boundary to actionable leaf-part referenc
     },
   });
 });
+it('provides an official continuation for externally stored text above the explicit attachment limit', async () => {
+  const fetch = vi.fn().mockImplementation(async (input: string, init: RequestInit) => {
+    expect(init.method).toBe('GET');
+    const url = new URL(input);
+    if (url.pathname.endsWith('/profile')) return Response.json(profile);
+    if (url.pathname.endsWith('/attachments/a1')) return Response.json({ size: 1048577, data: '' });
+    expect(url.searchParams.get('fields')).toContain('body(size,attachmentId)');
+    return Response.json(
+      message({ partId: '0', mimeType: 'text/plain', body: { size: 1048577, attachmentId: 'a1' } }),
+    );
+  });
+  vi.stubGlobal('fetch', fetch);
+  const result = await server().callTool('gmail_get_message', { id: 'm1' });
+  expect(result).toMatchObject({
+    structuredContent: {
+      complete: false,
+      nextCursor: null,
+      message: {
+        complete: false,
+        parts: [
+          {
+            complete: false,
+            size: 1048577,
+            attachmentId: 'a1',
+            bodyReference: {
+              tool: 'gmail_get_attachment',
+              arguments: { messageId: 'm1', attachmentId: 'a1' },
+            },
+            providerReference: {
+              method: 'GET',
+              path: 'users/me/messages/m1/attachments/a1',
+              query: {},
+              supportsRange: false,
+            },
+          },
+        ],
+      },
+    },
+  });
+  expect(fetch).toHaveBeenCalledTimes(2);
+  expect(
+    fetch.mock.calls.some((call) => new URL(call[0]).pathname.endsWith('/attachments/a1')),
+  ).toBe(false);
+  expect(
+    await server().callTool('gmail_get_attachment', {
+      messageId: 'm1',
+      attachmentId: 'a1',
+      maxBytes: 1048576,
+    }),
+  ).toMatchObject({
+    isError: true,
+    structuredContent: { error: { code: 'ATTACHMENT_TOO_LARGE' } },
+  });
+});

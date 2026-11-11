@@ -244,6 +244,7 @@ export function normalizeMessage(
       return {
         ...reference,
         complete: false,
+        providerReference: providerReference(value.id, part),
         bodyReference: {
           tool: 'gmail_get_attachment',
           arguments: { messageId: value.id, attachmentId: part.body.attachmentId },
