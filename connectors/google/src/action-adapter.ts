@@ -1,7 +1,7 @@
 /** Sender-bound extension for an existing durable ActionBroker. */
 import { createHash } from 'node:crypto';
 import { z } from 'zod';
-import { header, readMessage, reconcileMail } from './action-reconcile.js';
+import { header, readSourceHeaders, reconcileMail } from './action-reconcile.js';
 import type {
   ActionAdapter,
   ActionRecord,
@@ -128,7 +128,7 @@ async function prepare(
     ...(settings.senderDisplayName ? { senderDisplayName: settings.senderDisplayName } : {}),
   };
   if (operation === 'reply') {
-    const message = await readMessage(settings, sourceMessageRef!.id);
+    const message = await readSourceHeaders(settings, sourceMessageRef!.id);
     const inReplyTo = rfcMessageIdSchema.parse(header(message.headers, 'message-id'));
     const prior = header(message.headers, 'references', false).trim();
     const references = prior ? prior.split(/\s+/).map((r) => rfcMessageIdSchema.parse(r)) : [];

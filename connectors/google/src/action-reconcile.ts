@@ -19,10 +19,8 @@ const partSchema = z.object({
   attachment: z.boolean().optional(),
   attachmentId: id.optional(),
 });
-const messageSchema = z.object({
-  id,
-  threadId: id,
-  headers,
+const sourceHeadersSchema = z.object({ id, threadId: id, headers });
+const messageSchema = sourceHeadersSchema.extend({
   parts: z.array(partSchema).max(1000).optional(),
   labelIds: z.array(z.string()).optional(),
 });
@@ -78,6 +76,16 @@ export function header(values: Headers, name: string, required = true): string {
   if (found.length > 1 || (required && found.length !== 1))
     throw Error('Missing or duplicate header');
   return found.length ? decodeHeader(found[0]!.value) : '';
+}
+/** Replies need authenticated source headers, not the incoming attachment bytes or limits. */
+export async function readSourceHeaders(settings: MailSettings, messageId: string) {
+  const response = checked(
+    settings,
+    await settings.reader.call('getMessage', { id: messageId, maxBodyChars: 65536 }),
+  );
+  const message = sourceHeadersSchema.parse(response.message);
+  if (message.id !== messageId) throw Error('Message reference changed');
+  return message;
 }
 export async function readMessage(settings: MailSettings, messageId: string) {
   const response = checked(
