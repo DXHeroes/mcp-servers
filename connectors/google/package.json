@@ -21,6 +21,11 @@
       "types": "./dist/gmail-read.d.ts",
       "import": "./dist/gmail-read.js",
       "require": "./dist/gmail-read.js"
+    },
+    "./action-adapter": {
+      "types": "./dist/action-adapter.d.ts",
+      "import": "./dist/action-adapter.js",
+      "require": "./dist/action-adapter.js"
     }
   },
   "files": [

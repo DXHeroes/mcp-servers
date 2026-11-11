@@ -394,3 +394,8 @@ Primary references: [profile identity](https://developers.google.com/workspace/g
 [message get](https://developers.google.com/workspace/gmail/api/reference/rest/v1/users.messages/get),
 [thread get](https://developers.google.com/workspace/gmail/api/reference/rest/v1/users.threads/get),
 [attachment get](https://developers.google.com/workspace/gmail/api/reference/rest/v1/users.messages.attachments/get).
+
+## Sender-bound action adapter
+
+The host-only `./action-adapter` export integrates with an existing durable action broker.
+See [installation, authorization and recovery contract](./ACTION-ADAPTER.md).
