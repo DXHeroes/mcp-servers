@@ -42,7 +42,23 @@ const message = (id = 'm1', text = 'Žlutý text') => ({
 function provider(body: unknown) {
   const fetch = vi.fn().mockImplementation(async (url: string, init: RequestInit) => {
     expect(init.method).toBe('GET');
-    return Response.json(String(url).endsWith('/profile') ? profile : body);
+    if (String(url).endsWith('/profile')) return Response.json(profile);
+    const requestUrl = new URL(url);
+    const fields = requestUrl.searchParams.get('fields') ?? '';
+    if (requestUrl.searchParams.get('format') === 'minimal') {
+      const thread = body as { id: string; messages?: { id: string; threadId: string }[] };
+      return Response.json({
+        id: thread.id,
+        messages: thread.messages?.map((m) => ({ id: m.id, threadId: m.threadId })),
+      });
+    }
+    return Response.json(
+      fields.includes('body(size,attachmentId)')
+        ? JSON.parse(
+            JSON.stringify(body, (key, value: unknown) => (key === 'data' ? undefined : value)),
+          )
+        : body,
+    );
   });
   vi.stubGlobal('fetch', fetch);
   return fetch;
@@ -110,8 +126,10 @@ it('refuses missing or invalid profile proof without reading a message', async (
   });
   expect(fetch).toHaveBeenCalledTimes(1);
 });
-it('decodes text and preserves headers and attachment references without fetching attachment data', async () => {
-  const fetch = provider(message());
+it('decodes text and preserves headers after a metadata-only preflight', async () => {
+  const body = message();
+  body.payload.parts.pop();
+  const fetch = provider(body);
   expect(await server().callTool('gmail_get_message', { id: 'm1' })).toMatchObject({
     structuredContent: {
       complete: true,
@@ -122,17 +140,15 @@ it('decodes text and preserves headers and attachment references without fetchin
           { name: 'Message-ID', value: '<m1@example.test>' },
           { name: 'Subject', value: 'Synthetic subject' },
         ],
-        parts: [
-          { partId: '0', text: 'Žlutý text', complete: true },
-          { partId: '1', filename: 'fixture.pdf', attachmentId: 'a1' },
-        ],
+        parts: [{ partId: '0', text: 'Žlutý text', complete: true }],
       },
     },
   });
-  expect(fetch).toHaveBeenCalledTimes(2);
+  expect(fetch).toHaveBeenCalledTimes(3);
 });
 it('pages a long body without silent truncation and rejects a changed message snapshot', async () => {
   const body = message('m1', 'Žlutý text'.repeat(200));
+  body.payload.parts.pop();
   const fetch = provider(body);
   const first = data(
     await server().callTool('gmail_get_message', { id: 'm1', maxBodyChars: 1000 }),
@@ -252,6 +268,7 @@ it('maps read provider failures without leaking response bodies or credentials',
 it('rejects malformed MIME data rather than claiming complete content', async () => {
   const body = message();
   body.payload.parts[0]!.body.data = '%%%';
+  body.payload.parts.pop();
   provider(body);
   expect(await server().callTool('gmail_get_message', { id: 'm1' })).toMatchObject({
     structuredContent: { error: { code: 'INVALID_PROVIDER_RESPONSE' } },
@@ -306,10 +323,15 @@ it('binds cursors to mailbox, resource and thread snapshot', async () => {
     await server().callTool('gmail_get_thread', { id: 't1', cursor: first.nextCursor }),
   ).toMatchObject({ structuredContent: { error: { code: 'STALE_CURSOR' } } });
 });
-it('rejects oversized provider responses explicitly rather than returning a complete thread', async () => {
+it('uses bounded message references for a thread larger than the full-response cap', async () => {
   provider({ id: 't1', messages: [message('m1', 'x'.repeat(2 * 1024 * 1024))] });
   expect(await server().callTool('gmail_get_thread', { id: 't1' })).toMatchObject({
-    structuredContent: { error: { code: 'RESPONSE_TOO_LARGE' } },
+    structuredContent: {
+      complete: false,
+      messages: [
+        { id: 'm1', bodyReference: { tool: 'gmail_get_message', arguments: { id: 'm1' } } },
+      ],
+    },
   });
 });
 it('decodes declared legacy charsets', async () => {
@@ -317,14 +339,16 @@ it('decodes declared legacy charsets', async () => {
   body.payload.parts[0]!.headers![0]!.value = 'text/plain; charset=windows-1252';
   body.payload.parts[0]!.body.data = Buffer.from([0x63, 0x61, 0x66, 0xe9]).toString('base64url');
   body.payload.parts[0]!.body.size = 4;
+  body.payload.parts.pop();
   provider(body);
   expect(await server().callTool('gmail_get_message', { id: 'm1' })).toMatchObject({
-    structuredContent: { message: { parts: [{ text: 'café' }, { filename: 'fixture.pdf' }] } },
+    structuredContent: { message: { parts: [{ text: 'café' }] } },
   });
 });
 it('refuses a body whose declared decoded size disagrees with the delivered bytes', async () => {
   const body = message();
   body.payload.parts[0]!.body.size = 9000;
+  body.payload.parts.pop();
   provider(body);
   expect(await server().callTool('gmail_get_message', { id: 'm1' })).toMatchObject({
     structuredContent: { error: { code: 'INVALID_PROVIDER_RESPONSE' } },
