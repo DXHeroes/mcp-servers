@@ -2,7 +2,7 @@
 
 Independent HTTP service endpoints using the user's access token supplied by a gateway.
 Google Tasks uses `/tasks/mcp`, Contacts uses `/contacts/mcp`, and the separate Workspace
-directory offer uses `/directory/mcp`. Gmail's send-only offer uses `/gmail/mcp`.
+directory offer uses `/directory/mcp`. Gmail's send-only offer uses `/gmail/mcp`; the separate read-only offer uses `/gmail-read/mcp`.
 `/mcp` and stdio are deliberately not exposed for this
 multi-service package. Source is MIT; the shared kit retains its license.
 
@@ -88,12 +88,15 @@ integrator write policy still apply. This scope does not itself introduce restri
 CASA requirements. The app still needs applicable sensitive-scope verification for public
 rollout; the operator's shared app must separately assess its other grants.
 [Google's scope classification](https://developers.google.com/workspace/gmail/api/auth/scopes)
-lists `gmail.readonly` and `gmail.compose` as restricted. Wave 2 mailbox reads and draft
-management are **not implemented or advertised** by this offer. Their separate offer and
-public release remain dependent on the requesting app's restricted-scope review and,
+lists `gmail.readonly` and `gmail.compose` as restricted. Mailbox reads are available only through the separate read offer below; draft
+management is not implemented. Public release of restricted-scope functionality remains dependent on the requesting app's restricted-scope review and,
 where required, security assessment. Internal testing consent does not satisfy that gate.
 
-Inputs use bare ASCII email addresses, not display-name address syntax. Supply `from`
+Address fields use bare ASCII email addresses. Optional `senderDisplayName` is separately
+encoded into From using RFC 2047; optional `replyTo` is one bare address. Optional `messageId`
+is a stable RFC Message-ID including angle brackets, e.g. `<job.123@example.test>`.
+Omitting these fields preserves the previous generated Message-ID and From behavior. A stable
+Message-ID supports reconciliation, but Google does not promise send deduplication. Supply `from`
 as the authenticated mailbox or an authorized send-as alias; Google enforces sender
 permission. At least one of `to`, `cc`, `bcc` must contain a recipient (100 total maximum),
 and at least one of `text` or `html` must be supplied. Both bodies produce MIME alternatives.
@@ -275,3 +278,86 @@ Primary references: [contact search](https://developers.google.com/people/api/re
 [delete](https://developers.google.com/people/api/rest/v1/people/deleteContact),
 [group members](https://developers.google.com/people/api/rest/v1/contactGroups.members/modify),
 [directory search](https://developers.google.com/people/api/rest/v1/people/searchDirectoryPeople).
+
+
+## Read-only Gmail contract (0.3.0)
+
+`google-gmail-read` is a separate catalog offer at `/gmail-read/mcp`. Its only scope is
+`https://www.googleapis.com/auth/gmail.readonly`; it exposes no send, update, label or draft
+operation. This is a restricted scope. The operator owns app verification and any applicable
+security assessment before public rollout. Google credentials stay in the gateway and every
+request requires the existing service bearer plus explicit `per_user` credential delivery.
+
+Every successful tool result returns `structuredContent.mailbox` as
+`{emailAddress, verified: true, source: "users.getProfile"}`. The profile is fetched with the
+same delegated token on every logical call, within the same 20-second deadline. It proves
+mailbox identity, not authorized send-as aliases. The send-only grant cannot call getProfile
+or enumerate settings.sendAs; alias authorization remains Google's send-side check.
+
+| Tool | Arguments | Result fields besides mailbox |
+| --- | --- | --- |
+| `gmail_list_messages` | `q?` (max 1024 chars), `maxResults?` (1–100, default 50), `pageToken?`, `includeSpamTrash?` (default false) | `messages: [{id, threadId}]`, `resultSizeEstimate?`, `nextPageToken`, `complete` |
+| `gmail_find_sent_message` | `messageId` (RFC Message-ID), `maxResults?` (1–100, default 10), `pageToken?` | Same reference page; query is always `in:sent rfc822msgid:<caller-id>` |
+| `gmail_get_message` | `id` (Gmail opaque ID), `maxBodyChars?` (1–65536, default 32768), `cursor?` | `message`, `nextCursor`, `complete` |
+| `gmail_get_thread` | `id` (Gmail opaque thread ID), `maxResults?` (1–20, default 10), `maxBodyChars?` (per message), `cursor?` | `id`, `historyId?`, `messages`, `totalMessages`, `nextCursor`, `complete` |
+| `gmail_get_attachment` | `messageId`, exactly one of `attachmentId` or inline `partId`, `maxBytes?` (1–1048576, default 262144) | Requested IDs, `size`, canonical padded `contentBase64`, `complete: true` |
+
+List/search reads return one provider page. `nextPageToken: null` means no remaining provider
+page. A search can return zero, one or multiple candidates; callers must exhaust pagination
+before inferring absence or uniqueness. No read automatically replays a send.
+
+Messages preserve `id`, `threadId`, optional `historyId`/`internalDate`, `labelIds`, original
+header name/value pairs and flattened MIME leaf `parts`. Text/plain and text/html bodies
+are base64url decoded using their declared charset (UTF-8 by default) and returned as inert
+strings, including HTML. Each text part has `text`, `textOffset`, `totalChars`, `complete`;
+o HTML is executed and no URLs are followed. Original header values remain original,
+including encoded words. Attachments return metadata (`partId`, `mimeType`, `filename`,
+`size`, optional `attachmentId`) and a `bodyReference` for the explicit attachment operation;
+bytes are excluded from message/thread output. Externally stored text parts likewise carry
+an attachment reference. Attachment retrieval has both decoded-size validation and the
+transport's independent 2 MiB response cap. Inline attachment data present in Gmail's full
+message response is not returned until the explicit attachment tool is called.
+
+Gmail threads.get has **no provider pageToken**. Connector cursors page the returned thread
+messages, or Unicode code points across a message's decoded text parts. They bind the
+mailbox, resource ID, full content snapshot and offset; changed data returns `STALE_CURSOR`
+and callers restart the traversal. `nextCursor: null` ends that traversal. `complete: false`
+also covers truncated text or externally stored text parts: inspect each incomplete message's
+`bodyReference` and each part reference, even when there is no thread nextCursor. A complete
+result covers requested text, headers and attachment references; fetching attachment bytes
+is always a separate explicit choice. Continuation pages repeat metadata and report text
+ranges so callers can assemble content without losing skipped parts.
+
+The transport refuses Google responses above 2 MiB with `RESPONSE_TOO_LARGE`; it does not
+return a silently shortened success. In that case a thread may be too large for this
+interactive contract. No unbounded fallback or attachment auto-download occurs. Invalid
+provider shapes/encoding/size return `INVALID_PROVIDER_RESPONSE`; unsupported declared
+charsets return `UNSUPPORTED_CHARSET`. Other fixed codes include `INVALID_ARGUMENTS`,
+`UNKNOWN_TOOL`, `ATTACHMENT_NOT_FOUND`, `ATTACHMENT_TOO_LARGE`, `READ_FAILED`, `PROVIDER_ERROR`
+and `RATE_LIMITED` (with status/retryAfterMs when applicable). A definite 401 uses the existing
+upstream reconnect signal. Error results never expose token values or provider bodies.
+
+First-party host imports are available from `@dxheroes/mcp-google/gmail-message`:
+`buildGmailMessage(input: unknown, reply?: boolean): {raw: string; threadId?: string}`,
+`gmailSendSchema`, `gmailReplySchema`, `rfcMessageIdSchema` and type `GmailMessageArgs`.
+The helper validates the same strict bounded inputs as the send tools and performs no I/O.
+`GoogleGmailReadServer` is also exported from the package root and `./gmail-read`.
+The source package stays `private: true`; these workspace exports do not imply npm publication.
+
+Deployment map example:
+
+```json
+{"google-gmail-read":"https://<connector-host>/gmail-read/mcp","google-gmail-send":"https://<connector-host>/gmail/mcp"}
+```
+
+Release preparation targets `google-v0.3.0` → `ghcr.io/dxheroes/mcp-google:v0.3.0` through the
+existing signed native amd64/arm64 image workflow. The controller owns the tag, publication,
+immutable image digest, signature verification and deployed endpoint proof. Local build/tests
+publish nothing. Read/send live acceptance, actual alias behavior and the deployed artifact
+remain unverified; use an immutable verified image before connecting an action adapter.
+
+Primary references: [profile identity](https://developers.google.com/workspace/gmail/api/reference/rest/v1/users/getProfile),
+[message listing/search](https://developers.google.com/workspace/gmail/api/reference/rest/v1/users.messages/list),
+[message structure/thread criteria](https://developers.google.com/workspace/gmail/api/reference/rest/v1/users.messages),
+[thread get](https://developers.google.com/workspace/gmail/api/reference/rest/v1/users.threads/get),
+[attachment get](https://developers.google.com/workspace/gmail/api/reference/rest/v1/users.messages.attachments/get).

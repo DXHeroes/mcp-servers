@@ -3,13 +3,14 @@ import type { McpPackage } from '@dxheroes/mcp-kit';
 import type { ConnectorEndpoint } from '@dxheroes/mcp-runtime';
 import { GoogleContactsServer, GoogleDirectoryServer } from './contacts.js';
 import { GoogleGmailServer } from './gmail.js';
+import { GoogleGmailReadServer } from './gmail-read.js';
 import { GoogleTasksServer } from './tasks.js';
 export const mcpPackage: McpPackage = {
   metadata: {
     id: 'google',
     name: 'Google Tasks',
     description: 'Task lists and tasks for personal and Workspace accounts using delegated OAuth.',
-    version: '0.2.0',
+    version: '0.3.0',
     author: 'DX Heroes',
     license: 'MIT',
     requiresApiKey: false,
@@ -78,13 +79,37 @@ export const gmailPackage: McpPackage = {
   },
   createServer: (credential) => new GoogleGmailServer(credential),
 };
+export const gmailReadPackage: McpPackage = {
+  ...tasksPackage,
+  metadata: {
+    ...tasksPackage.metadata,
+    id: 'google-gmail-read',
+    name: 'Gmail Read',
+    description: 'Read mailbox messages, threads and explicit bounded attachments. No sends.',
+    docsUrl: 'https://developers.google.com/workspace/gmail/api/reference/rest',
+    oauthDefaults: {
+      ...tasksPackage.metadata.oauthDefaults!,
+      scopes: ['https://www.googleapis.com/auth/gmail.readonly'],
+    },
+  },
+  createServer: (credential) => new GoogleGmailReadServer(credential),
+};
 export const endpoints: readonly ConnectorEndpoint[] = [
   { path: '/tasks/mcp', package: tasksPackage, auth: 'oauth' },
   { path: '/contacts/mcp', package: contactsPackage, auth: 'oauth' },
   { path: '/directory/mcp', package: directoryPackage, auth: 'oauth' },
   { path: '/gmail/mcp', package: gmailPackage, auth: 'oauth' },
+  { path: '/gmail-read/mcp', package: gmailReadPackage, auth: 'oauth' },
 ];
 export { GoogleContactsServer, GoogleDirectoryServer } from './contacts.js';
 export { GoogleGmailServer } from './gmail.js';
+export type { GmailMessageArgs } from './gmail-message.js';
+export {
+  buildGmailMessage,
+  gmailReplySchema,
+  gmailSendSchema,
+  rfcMessageIdSchema,
+} from './gmail-message.js';
+export { GoogleGmailReadServer } from './gmail-read.js';
 export { GoogleTasksServer } from './tasks.js';
 export default mcpPackage;

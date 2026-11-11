@@ -9,6 +9,12 @@ import {
 } from '@dxheroes/mcp-kit';
 import { UpstreamCredentialInvalidError } from '@dxheroes/mcp-runtime';
 
+export class GoogleResponseTooLargeError extends Error {
+  constructor() {
+    super('Google response exceeds size limit');
+  }
+}
+
 export class GoogleApiError extends Error {
   constructor(
     readonly status: number,
@@ -108,7 +114,7 @@ export class GoogleClient {
           const part = await reader.read();
           if (part.done) break;
           size += part.value.byteLength;
-          if (size > 2 * 1024 * 1024) throw new Error('Google response exceeds size limit');
+          if (size > 2 * 1024 * 1024) throw new GoogleResponseTooLargeError();
           chunks.push(part.value);
         }
         signal.throwIfAborted();

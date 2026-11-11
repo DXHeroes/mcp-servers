@@ -1,6 +1,6 @@
 {
   "name": "@dxheroes/mcp-google",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "description": "Google service MCP endpoints using per-user OAuth credentials",
   "type": "module",
@@ -11,6 +11,16 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.js"
+    },
+    "./gmail-message": {
+      "types": "./dist/gmail-message.d.ts",
+      "import": "./dist/gmail-message.js",
+      "require": "./dist/gmail-message.js"
+    },
+    "./gmail-read": {
+      "types": "./dist/gmail-read.d.ts",
+      "import": "./dist/gmail-read.js",
+      "require": "./dist/gmail-read.js"
     }
   },
   "files": [
