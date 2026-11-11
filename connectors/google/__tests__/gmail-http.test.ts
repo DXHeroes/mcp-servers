@@ -94,3 +94,98 @@ for (const era of ['auto', 'legacy'] as const) {
     }
   });
 }
+
+for (const era of ['auto', 'legacy'] as const) {
+  it(`${era}: isolates readonly mailbox identity and forbids send through real MCP HTTP`, async () => {
+    const realFetch = globalThis.fetch;
+    const providerCalls: string[] = [];
+    vi.stubGlobal('fetch', async (input: string | URL | Request, init?: RequestInit) => {
+      const url = new URL(input instanceof Request ? input.url : String(input));
+      if (url.hostname === '127.0.0.1') return realFetch(input, init);
+      providerCalls.push(url.pathname);
+      expect(init?.method).toBe('GET');
+      const token = new Headers(init?.headers).get('authorization');
+      expect(['Bearer work-account', 'Bearer personal-account']).toContain(token);
+      return Response.json(
+        url.pathname.endsWith('/profile')
+          ? {
+              emailAddress:
+                token === 'Bearer work-account' ? 'work@example.test' : 'personal@example.test',
+            }
+          : { messages: [] },
+      );
+    });
+    const runtime = createConnectorHttpServer(
+      mcpPackage,
+      {
+        host: '127.0.0.1',
+        port: 0,
+        allowedHosts: ['127.0.0.1'],
+        allowedOrigins: [],
+        accessToken: 'service-only',
+        sharedCredential: undefined,
+        localTestMode: false,
+        maxBodyBytes: 2048,
+        totalTimeoutMs: 3000,
+        idleTimeoutMs: 1000,
+      },
+      endpoints,
+    );
+    await new Promise<void>((resolve) => runtime.server.listen(0, '127.0.0.1', resolve));
+    const clients: Client[] = [];
+    try {
+      for (const token of ['work-account', 'personal-account']) {
+        const client = new Client(
+          { name: 'read-test', version: '1' },
+          era === 'auto' ? { versionNegotiation: { mode: 'auto' } } : {},
+        );
+        clients.push(client);
+        await client.connect(
+          new StreamableHTTPClientTransport(
+            new URL(
+              `http://127.0.0.1:${(runtime.server.address() as { port: number }).port}/gmail-read/mcp`,
+            ),
+            {
+              requestInit: {
+                headers: {
+                  Authorization: 'Bearer service-only',
+                  'X-MCP-Credential-Mode': 'per_user',
+                  'X-MCP-Upstream-Credential': Buffer.from(token).toString('base64url'),
+                },
+              },
+            },
+          ),
+        );
+        const tools = (await client.listTools()).tools;
+        expect(tools).toHaveLength(5);
+        expect(tools.every((t) => t.annotations?.readOnlyHint)).toBe(true);
+        const sent = await client.callTool({ name: 'gmail_send_message', arguments: {} });
+        expect(sent).toHaveProperty('isError', true);
+      }
+      expect(providerCalls).toEqual([]);
+      const results = await Promise.all(
+        clients.map((client) => client.callTool({ name: 'gmail_list_messages', arguments: {} })),
+      );
+      expect(results).toMatchObject([
+        {
+          structuredContent: {
+            mailbox: { emailAddress: 'work@example.test', verified: true },
+            messages: [],
+            complete: true,
+          },
+        },
+        {
+          structuredContent: {
+            mailbox: { emailAddress: 'personal@example.test', verified: true },
+            messages: [],
+            complete: true,
+          },
+        },
+      ]);
+      expect(providerCalls).toHaveLength(4);
+    } finally {
+      await Promise.all(clients.map((client) => client.close()));
+      await runtime.close();
+    }
+  });
+}

@@ -17,6 +17,7 @@ test('generates OAuth service offers without a package-level API-key alias', asy
         'google-tasks': 'https://connector.example/tasks/mcp',
         toggl: 'https://toggl.example/mcp',
         'google-gmail-send': 'https://connector.example/gmail/mcp',
+        'google-gmail-read': 'https://connector.example/gmail-read/mcp',
       }),
     );
     const { stdout } = await exec(process.execPath, ['scripts/catalog-manifest.mjs', file]);
@@ -34,6 +35,13 @@ test('generates OAuth service offers without a package-level API-key alias', asy
     assert.equal(offers[2].auth.type, 'oauth');
     assert.deepEqual(offers[2].auth.oauthDefaults.scopes, [
       'https://www.googleapis.com/auth/gmail.send',
+    ]);
+    assert.equal(offers[3].id, 'google-gmail-read');
+    assert.equal(offers[3].endpoint.url, 'https://connector.example/gmail-read/mcp');
+    assert.equal(offers[3].auth.type, 'oauth');
+    assert.deepEqual(offers[3].auth.credentialModes, ['per_user']);
+    assert.deepEqual(offers[3].auth.oauthDefaults.scopes, [
+      'https://www.googleapis.com/auth/gmail.readonly',
     ]);
     for (const map of [
       { google: 'https://connector.example/mcp' },
