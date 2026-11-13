@@ -33,6 +33,16 @@ export {
   withToolCallContext,
   withToolCallDeadline,
 } from './utils/call-context.js';
+export type {
+  GooglePrincipalClaims,
+  GooglePrincipalPin,
+} from './utils/google-principal-context.js';
+export { verifyGooglePrincipalContext } from './utils/google-principal-context.js';
+export type { GooglePrincipalBinding } from './utils/google-principal-registry.js';
+export {
+  googlePrincipalBindingSchema,
+  googlePrincipalRegistrySchema,
+} from './utils/google-principal-registry.js';
 export type { ProviderExtraField, ProviderExtras } from './utils/provider-extras.js';
 export {
   decodeUpstreamContext,

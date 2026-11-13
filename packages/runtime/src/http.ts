@@ -7,6 +7,7 @@ import { createAdapter } from './adapter.js';
 import { authenticate, HttpFailure, resolveCredential } from './auth.js';
 import type { RuntimeConfig } from './config.js';
 import { type ConnectorEndpoint, connectorEndpoints } from './endpoints.js';
+import { bindGooglePrincipalRoutes, loadGooglePrincipalPin } from './google-principal-registry.js';
 
 export function safeFailure(res: ServerResponse, status: number, code: string): void {
   if (res.headersSent) {
@@ -42,6 +43,9 @@ export function createConnectorHttpServer(
   endpoints?: readonly ConnectorEndpoint[],
 ) {
   const routes = connectorEndpoints(pkg, endpoints);
+  const binding = bindGooglePrincipalRoutes(config.googlePrincipalBinding, routes);
+  if (binding && config.localTestMode && !['127.0.0.1', '::1'].includes(config.host))
+    throw new Error('Local test mode requires a loopback listener');
   const pending = new Set<Promise<void>>();
   const shutdown = new AbortController();
   setMaxListeners(256, shutdown.signal);
@@ -62,11 +66,13 @@ export function createConnectorHttpServer(
         if (!endpoint) throw new HttpFailure(404, 'not_found');
         authenticate(req, config);
         if (pending.size >= 128) throw new HttpFailure(503, 'capacity_reached');
+        const pin = await loadGooglePrincipalPin(binding, endpoint.path, config.localTestMode);
         const credential = resolveCredential(
           req,
           config,
           endpoint.auth,
           endpoint.providerExtraFields,
+          pin,
         );
         if (req.method !== 'POST') throw new HttpFailure(405, 'method_not_allowed');
         const body = await readBody(req, config.maxBodyBytes);

@@ -3,8 +3,10 @@ import type { IncomingMessage } from 'node:http';
 import {
   type ApiKeyConfig,
   decodeUpstreamContext,
+  type GooglePrincipalPin,
   type ProviderExtraField,
   type ProviderExtras,
+  verifyGooglePrincipalContext,
 } from '@dxheroes/mcp-kit';
 import type { RuntimeConfig } from './config.js';
 
@@ -55,6 +57,7 @@ export function resolveCredential(
   config: Pick<RuntimeConfig, 'sharedCredential'>,
   auth?: 'oauth',
   providerExtraFields: readonly ProviderExtraField[] = [],
+  googlePrincipalPin?: GooglePrincipalPin,
 ): ApiKeyConfig | null {
   const mode = singleHeader(req, 'x-mcp-credential-mode') ?? 'shared';
   if (mode !== 'shared' && mode !== 'per_user')
@@ -82,19 +85,24 @@ export function resolveCredential(
     throw new HttpFailure(400, 'upstream_credential_required');
   const context = singleHeader(req, 'x-mcp-upstream-context');
   let providerExtras: ProviderExtras | undefined;
-  if (context !== undefined) {
+  if (context !== undefined || googlePrincipalPin) {
     if (auth !== 'oauth' || mode !== 'per_user')
       throw new HttpFailure(400, 'invalid_upstream_context');
     try {
-      providerExtras = decodeUpstreamContext(context);
+      providerExtras = googlePrincipalPin
+        ? verifyGooglePrincipalContext(context ?? '', secret!, googlePrincipalPin).providerExtras
+        : decodeUpstreamContext(context!);
       if (
-        Object.keys(providerExtras).some(
+        Object.keys(providerExtras ?? {}).some(
           (key) => !providerExtraFields.includes(key as ProviderExtraField),
         )
       )
         throw new Error('Undeclared provider metadata');
     } catch {
-      throw new HttpFailure(400, 'invalid_upstream_context');
+      throw new HttpFailure(
+        googlePrincipalPin ? 403 : 400,
+        googlePrincipalPin ? 'google_principal_unavailable' : 'invalid_upstream_context',
+      );
     }
   }
   secret ??= config.sharedCredential;

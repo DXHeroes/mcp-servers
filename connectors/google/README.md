@@ -399,3 +399,104 @@ Primary references: [profile identity](https://developers.google.com/workspace/g
 
 The host-only `./action-adapter` export integrates with an existing durable action broker.
 See [installation, authorization and recovery contract](./ACTION-ADAPTER.md).
+
+## Opt-in independently pinned Google mail principal
+
+The HTTP runtime can require Gateway `google-principal/v2` evidence for the paired
+`/gmail-read/mcp` and `/gmail/mcp` routes. Configure `MCP_GOOGLE_PRINCIPAL_BINDING`
+as strict JSON (or use the existing mutually exclusive `_FILE` configuration source):
+
+```json
+{
+  "registryFile": "/run/mcp-principals/registry.json",
+  "pairId": "technical-mail",
+  "readerPath": "/gmail-read/mcp",
+  "senderPath": "/gmail/mcp"
+}
+```
+
+These are deployment placeholders, not enrollment instructions. No generic source
+configuration contains a real address, key, account, producer URL or audience URL.
+Unknown fields, duplicate/wrong routes, non-Google/non-OAuth routes and invalid JSON
+are refused. One fixed pair is selected per runtime. Use a separately configured,
+explicitly routed instance and distinct audience URLs for another mailbox/entity;
+requests cannot select a pair, change pins or fall back to another credential.
+
+The registry is a UTF-8 JSON regular file, at most 65,536 bytes, with strict shape
+`{ "version": 1, "pairs": [...] }` and at most 32 uniquely named pairs. Each pair is
+`{ "id": "technical-mail", "reader": <pin>, "sender": <pin> }`. Each strict pin has:
+
+| Field | Contract |
+| --- | --- |
+| `publicKey`, `keyId` | Independently enrolled canonical base64 Ed25519 SPKI DER and SHA256 DER key ID |
+| `issuer` | Exactly `https://accounts.google.com` |
+| `producer` | Exact Gateway HTTP(S) origin, without credentials/query/fragment |
+| `audience` | Exact connector HTTP(S) URL, with the configured route path, without credentials/query/fragment |
+| `credentialId`, `credentialVersion` | Actual credential row and decimal generation string (0 or 1–20 digits, no leading zero) |
+| `grantId` | Reconnect grant UUID |
+| `subject`, `email` | Independently accepted Google subject and intended verified technical mailbox |
+| `purpose` | `gmail_readonly` for reader; `gmail_send` for sender |
+
+Reader and sender must share issuer, subject and email. Their row IDs, grant IDs and
+audiences must be distinct; each route retains its own exact generation and purpose.
+All pairs are validated, including inactive entries. An empty registry revokes all
+bound requests. No incoming evidence, label, Gateway creator, service bearer,
+caller JSON, embedded key ID or public key can establish or update a pin.
+
+### Operator protection and updates
+
+Production must run as a **non-root** UID. The file and every ancestor directory
+must be root-owned. Directories and the file must not be group/world writable, and
+no path component may be a symlink. Effective runtime write access (including ACLs)
+is refused as well. Mount the protected directory read-only into the
+runtime, without giving the runtime capabilities to change mounts or ownership.
+The operator updates the file atomically by replacing it from the host's writable
+side of that directory mount; do not use a single-file bind mount that retains the
+old inode. The runtime must never own the file or a replaceable parent directory.
+These are prerequisites for installation, which this source change does not perform.
+
+Every bound HTTP request opens the path anew with no-follow/nonblocking flags,
+checks the regular-file ownership/mode/size, verifies opened descriptor versus path
+identity, reads at most 65,537 bytes, validates the whole registry and selects only
+the configured pair and route. There is no pin cache, HTTP/model write API or TOFU.
+A missing/revoked pair, unreadable/unsafe file or invalid update fails closed. A
+request uses its own snapshot; already admitted requests are not cancelled by a
+later replacement. Pause new operations and drain in-flight work for coordinated
+revocation/rotation. New requests observe atomic updates before credential use.
+
+The existing explicit `MCP_LOCAL_TEST_MODE=true` is exclusively for loopback
+fixtures: it permits test-owned files/parents and requires a loopback listener
+configuration. Symlink, regular-file, size, descriptor identity and file-write-mode
+checks still apply. Never enable it in a deployed bound connector. No automatic
+chmod, chown, key creation, enrollment or host installation is performed.
+
+### Credential boundary and compatibility
+
+The actual HTTP callgraph is authentication/host/origin → capacity gate → current
+protected pins → credential decoding and v2 verification → body parsing → connector
+creation → Google client/provider. The consumer independently implements the frozen
+Gateway v2 protocol; it has no signer/private-key API and no private Gateway package
+dependency. It verifies Ed25519, the domain-separated exact payload, token SHA256,
+all identity/generation/audience pins, verified mailbox, actual narrow scopes,
+issued/expiry times and a lifetime of at most 60 seconds. The permitted actual grant
+is `openid`, `email` (or Google's userinfo.email spelling), and exactly one Gmail
+read-only or send scope. It does not widen scopes or perform OAuth consent.
+
+A bound route cannot downgrade to v1, shared credentials or service bearer alone.
+Failures before connector creation use bounded nonsecret error codes. Verified
+claims remain request-local; proof/subject/grant/row are never attached to public
+results or logged. Existing v1 metadata allowlists, duplicate headers, deadlines,
+body limits, pending limit, service authentication and unbound/non-Google behavior
+remain. Reader still performs its same-token `users.getProfile` mailbox check;
+sender makes no UserInfo/profile call. Existing sender/alias policy, prepared content
+hash, deterministic Message-ID and conservative uncertain reconciliation stay in
+the action adapter. Protected ActionBroker ownership and startup host composition
+are separate requirements.
+
+An ordinary refresh advances the exact credential version and requires protected
+operator reconciliation; reconnect also replaces the grant ID. Registry updates
+reject old proof immediately for subsequent requests, even within its remaining
+60-second cryptographic lifetime. New proof is accepted only after independently
+approved pins match. Source tests use actual frozen-producer vectors, the HTTP
+runtime, Google clients and owned loopback providers. They do not establish a new
+released artifact, installed mount, real enrollment, Google grant or mail delivery.
