@@ -38,9 +38,9 @@ test('a new connector resolves its release target by its own version without cha
 });
 
 test('Google mail release uses its independent version and image without npm publication', async () => {
-  assert.deepEqual(await releaseTarget('google-v0.3.0'), {
+  assert.deepEqual(await releaseTarget('google-v0.4.0'), {
     component: 'google',
-    version: '0.3.0',
+    version: '0.4.0',
     image: 'ghcr.io/dxheroes/mcp-google',
     dockerfile: 'Dockerfile.connector',
     build_args: 'CONNECTOR=google',

@@ -1,6 +1,6 @@
 {
   "name": "@dxheroes/mcp-google",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": true,
   "description": "Google service MCP endpoints using per-user OAuth credentials",
   "type": "module",

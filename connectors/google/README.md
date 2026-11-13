@@ -381,11 +381,13 @@ Deployment map example:
 {"google-gmail-read":"https://<connector-host>/gmail-read/mcp","google-gmail-send":"https://<connector-host>/gmail/mcp"}
 ```
 
-Release preparation targets `google-v0.3.0` → `ghcr.io/dxheroes/mcp-google:v0.3.0` through the
-existing signed native amd64/arm64 image workflow. The controller owns the tag, publication,
-immutable image digest, signature verification and deployed endpoint proof. Local build/tests
-publish nothing. Read/send live acceptance, actual alias behavior and the deployed artifact
-remain unverified; use an immutable verified image before connecting an action adapter.
+Release preparation targets `google-v0.4.0` → `ghcr.io/dxheroes/mcp-google:v0.4.0` through the
+existing signed native amd64/arm64 image workflow. The opt-in principal contract requires a
+separately verified 0.4.0 artifact before it can be relied on; this source preparation does not
+publish or install that artifact. The controller owns the tag, publication, immutable image
+digest, signature verification and deployed endpoint proof. Local build/tests publish nothing.
+Read/send live acceptance, actual alias behavior and the deployed artifact remain unverified;
+use an immutable verified image before connecting an action adapter.
 
 Primary references: [profile identity](https://developers.google.com/workspace/gmail/api/reference/rest/v1/users/getProfile),
 [message listing/search](https://developers.google.com/workspace/gmail/api/reference/rest/v1/users.messages/list),
