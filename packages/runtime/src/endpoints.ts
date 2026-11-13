@@ -9,6 +9,7 @@ export interface ConnectorEndpoint {
   path: string;
   package: McpPackage;
   auth?: 'oauth';
+  googleMailPurpose?: 'gmail_send' | 'gmail_readonly';
 }
 
 type RegisteredConnectorEndpoint = ConnectorEndpoint & {

@@ -3,7 +3,7 @@
 `@dxheroes/mcp-google/action-adapter` exports `createAdapter(settings)` and
 `prepareMail(settings, record, route)`. This is a host extension for an existing durable
 `ActionBroker`; it is not a standalone send queue. It has no private runtime dependency.
-Version 0.3.0 is source-prepared and private, not a published npm release.
+Version 0.4.0 is source-prepared and private, not a published npm release.
 
 ## Host contract
 

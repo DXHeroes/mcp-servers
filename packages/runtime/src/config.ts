@@ -1,6 +1,8 @@
 import { readFile } from 'node:fs/promises';
+import { type GooglePrincipalBinding, googlePrincipalBindingSchema } from '@dxheroes/mcp-kit';
 
 export interface RuntimeConfig {
+  googlePrincipalBinding?: GooglePrincipalBinding;
   host: string;
   port: number;
   allowedHosts: string[];
@@ -44,7 +46,17 @@ export async function loadConfig(env: NodeJS.ProcessEnv = process.env): Promise<
     throw new Error('Explicit MCP_ALLOWED_HOSTS required');
   const port = Number(env.MCP_PORT ?? 8080);
   if (!Number.isInteger(port) || port < 0 || port > 65535) throw new Error('Invalid MCP_PORT');
+  const binding = await readSecret(env, 'MCP_GOOGLE_PRINCIPAL_BINDING');
+  let googlePrincipalBinding: GooglePrincipalBinding | undefined;
+  if (binding !== undefined) {
+    try {
+      googlePrincipalBinding = googlePrincipalBindingSchema.parse(JSON.parse(binding));
+    } catch {
+      throw new Error('Invalid Google principal configuration');
+    }
+  }
   return {
+    ...(googlePrincipalBinding ? { googlePrincipalBinding } : {}),
     host,
     port,
     allowedHosts,

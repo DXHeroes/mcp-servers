@@ -10,7 +10,7 @@ export const mcpPackage: McpPackage = {
     id: 'google',
     name: 'Google Tasks',
     description: 'Task lists and tasks for personal and Workspace accounts using delegated OAuth.',
-    version: '0.3.0',
+    version: '0.4.0',
     author: 'DX Heroes',
     license: 'MIT',
     requiresApiKey: false,
@@ -98,8 +98,13 @@ export const endpoints: readonly ConnectorEndpoint[] = [
   { path: '/tasks/mcp', package: tasksPackage, auth: 'oauth' },
   { path: '/contacts/mcp', package: contactsPackage, auth: 'oauth' },
   { path: '/directory/mcp', package: directoryPackage, auth: 'oauth' },
-  { path: '/gmail/mcp', package: gmailPackage, auth: 'oauth' },
-  { path: '/gmail-read/mcp', package: gmailReadPackage, auth: 'oauth' },
+  { path: '/gmail/mcp', package: gmailPackage, auth: 'oauth', googleMailPurpose: 'gmail_send' },
+  {
+    path: '/gmail-read/mcp',
+    package: gmailReadPackage,
+    auth: 'oauth',
+    googleMailPurpose: 'gmail_readonly',
+  },
 ];
 export { GoogleContactsServer, GoogleDirectoryServer } from './contacts.js';
 export { GoogleGmailServer } from './gmail.js';
