@@ -484,6 +484,17 @@ issued/expiry times and a lifetime of at most 60 seconds. The permitted actual g
 is `openid`, `email` (or Google's userinfo.email spelling), and exactly one Gmail
 read-only or send scope. It does not widen scopes or perform OAuth consent.
 
+Both independent verifiers use the fixed exported
+`GOOGLE_PRINCIPAL_CLOCK_SKEW_SECONDS = 5` and their own runtime clock. They require
+`issuedAt <= now + 5`, `verifiedAt <= issuedAt + 5` and `verifiedAt <= now + 5` together.
+The two proof bounds prevent stacked tolerance across replicas. Neither HTTP JSON nor operator
+configuration can choose the clock or tolerance. Earliest admission can precede signed issuance
+by five seconds on the consumer clock, making the earliest-admission-to-expiry window at most
+65 seconds. The signed interval stays at most 60 seconds: `expiresAt > issuedAt`,
+`expiresAt - issuedAt <= 60` and `expiresAt > now` remain strict. Exact expiry has no grace.
+The producer still caps expiry at the known token expiry; timestamps beyond either proof bound
+are refused before connector creation.
+
 A bound route cannot downgrade to v1, shared credentials or service bearer alone.
 Failures before connector creation use bounded nonsecret error codes. Verified
 claims remain request-local; proof/subject/grant/row are never attached to public

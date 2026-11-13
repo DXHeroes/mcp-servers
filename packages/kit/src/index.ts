@@ -37,7 +37,10 @@ export type {
   GooglePrincipalClaims,
   GooglePrincipalPin,
 } from './utils/google-principal-context.js';
-export { verifyGooglePrincipalContext } from './utils/google-principal-context.js';
+export {
+  GOOGLE_PRINCIPAL_CLOCK_SKEW_SECONDS,
+  verifyGooglePrincipalContext,
+} from './utils/google-principal-context.js';
 export type { GooglePrincipalBinding } from './utils/google-principal-registry.js';
 export {
   googlePrincipalBindingSchema,

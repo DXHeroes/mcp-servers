@@ -1,10 +1,13 @@
-/** Independent consumer of Gateway google-principal/v2 (d61ace7).
+/** Independent consumer of Gateway google-principal/v2.
  * Keep wire schemas/domain/time semantics aligned with the producer. No signing API.
  * Trust comes only from an independently protected operator pin.
  */
 import { createHash, createPublicKey, type KeyObject, verify } from 'node:crypto';
 import { z } from 'zod';
 import { providerExtrasSchema } from './provider-extras.js';
+
+/** Fixed cross-host allowance; expiry remains strict and proof bounds never stack. */
+export const GOOGLE_PRINCIPAL_CLOCK_SKEW_SECONDS = 5;
 
 const SEND = 'https://www.googleapis.com/auth/gmail.send';
 const READ = 'https://www.googleapis.com/auth/gmail.readonly';
@@ -159,11 +162,12 @@ export function verifyGooglePrincipalContext(
     const p = c.googlePrincipal;
     if (
       !Number.isSafeInteger(now) ||
-      c.issuedAt > now ||
+      c.issuedAt > now + GOOGLE_PRINCIPAL_CLOCK_SKEW_SECONDS ||
       c.expiresAt <= now ||
       c.expiresAt <= c.issuedAt ||
       c.expiresAt - c.issuedAt > 60 ||
-      p.verifiedAt > c.issuedAt ||
+      p.verifiedAt > c.issuedAt + GOOGLE_PRINCIPAL_CLOCK_SKEW_SECONDS ||
+      p.verifiedAt > now + GOOGLE_PRINCIPAL_CLOCK_SKEW_SECONDS ||
       c.producer !== pin.producer ||
       c.audience !== pin.audience ||
       c.credentialId !== pin.credentialId ||

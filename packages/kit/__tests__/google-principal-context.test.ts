@@ -27,7 +27,7 @@ it('verifies an actual frozen Gateway signer vector and exact time boundaries', 
   expect(() =>
     verifyGooglePrincipalContext(vectors.headers.sender, 'sender-token', pin, claims.expiresAt - 1),
   ).not.toThrow();
-  for (const now of [claims.issuedAt - 1, claims.expiresAt, Number.NaN, 0.5])
+  for (const now of [claims.issuedAt - 6, claims.expiresAt, Number.NaN, 0.5])
     expect(() =>
       verifyGooglePrincipalContext(vectors.headers.sender, 'sender-token', pin, now),
     ).toThrow('GOOGLE_PRINCIPAL_UNAVAILABLE');
@@ -60,3 +60,27 @@ it('refuses signed-envelope additions and changed payload bytes', () => {
     );
   }
 });
+
+it.each([-5, -1, 1, 5])(
+  'admits exact producer evidence with consumer clock offset %s seconds',
+  (offset) => {
+    const issuedAt = JSON.parse(
+      Buffer.from(
+        JSON.parse(Buffer.from(vectors.headers.sender, 'base64url').toString()).payload,
+        'base64url',
+      ).toString(),
+    ).issuedAt;
+    expect(() =>
+      verifyGooglePrincipalContext(vectors.headers.sender, 'sender-token', pin, issuedAt + offset),
+    ).not.toThrow();
+  },
+);
+
+for (const vector of vectors.temporal) {
+  it(`actual producer temporal contract: ${vector.name}`, () => {
+    const verify = () =>
+      verifyGooglePrincipalContext(vector.header, 'sender-token', pin, vector.now);
+    if (vector.accepted) expect(verify()).toMatchObject({ credentialId: pin.credentialId });
+    else expect(verify).toThrow(/^GOOGLE_PRINCIPAL_UNAVAILABLE$/);
+  });
+}

@@ -354,3 +354,16 @@ it('duplicate proof headers refuse before provider dispatch', async () => {
   expect(calls).toHaveLength(0);
   expect(created).toBe(0);
 });
+
+for (const vector of vectors.temporal) {
+  it(`actual HTTP temporal contract: ${vector.name}`, async () => {
+    vi.spyOn(Date, 'now').mockReturnValue(vector.now * 1000);
+    if (!vector.accepted) return refused(vector.header);
+    const result = await call(vector.header);
+    expect(result.status).toBe(200);
+    expect(created).toBe(1);
+    expect(calls).toEqual([
+      { path: '/gmail/v1/users/me/messages/send', authorization: 'Bearer sender-token' },
+    ]);
+  });
+}
