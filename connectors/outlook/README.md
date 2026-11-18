@@ -131,6 +131,9 @@ Responses are bounded to 2 MiB each. The free/busy fallback also caps total reta
 A revoked/expired token (HTTP 401) throws the runtime's machine-readable upstream-credential signal
 for reconnect. Other provider statuses yield fixed `PROVIDER_ERROR`/`RATE_LIMITED`; validation and
 transport failures yield fixed errors without provider response bodies, access tokens or causes.
+For a 404 with Graph code `MailboxNotEnabledForRESTAPI` or `MailboxNotSupportedForRESTAPI`,
+the fixed `PROVIDER_ERROR` includes `reason: mailbox_rest_unavailable`. Other 404 responses
+keep the generic error. The diagnostic indicates Graph cannot access the current mailbox.
 Read tools have `readOnlyHint`; event delete has `destructiveHint`.
 
 Run `pnpm --filter @dxheroes/mcp-outlook test` and `pnpm check`. Tests use synthetic responses shaped

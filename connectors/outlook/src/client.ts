@@ -4,6 +4,10 @@ import { GraphClient as SharedGraphClient } from '@dxheroes/mcp-graph';
 export { GraphApiError, GraphInputError } from '@dxheroes/mcp-graph';
 export class GraphClient extends SharedGraphClient {
   constructor(token: string) {
-    super(token, { roots: ['me'], headers: { Prefer: 'outlook.timezone="UTC"' } });
+    super(token, {
+      roots: ['me'],
+      headers: { Prefer: 'outlook.timezone="UTC"' },
+      diagnoseMailboxErrors: true,
+    });
   }
 }

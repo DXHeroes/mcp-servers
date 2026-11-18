@@ -113,15 +113,22 @@ export abstract class OutlookServer extends McpServer {
           error.status === 429 ? 'RATE_LIMITED' : 'PROVIDER_ERROR',
           error.status,
           error.retryAfterMs,
+          error.reason,
         );
       return this.failure('UPSTREAM_UNAVAILABLE');
     }
   }
-  private failure(code: string, status?: number, retryAfterMs?: number) {
+  private failure(
+    code: string,
+    status?: number,
+    retryAfterMs?: number,
+    reason?: GraphApiError['reason'],
+  ) {
     const error = {
       code,
       ...(status !== undefined ? { status } : {}),
       ...(retryAfterMs !== undefined ? { retryAfterMs } : {}),
+      ...(reason !== undefined ? { reason } : {}),
     };
     return {
       isError: true,

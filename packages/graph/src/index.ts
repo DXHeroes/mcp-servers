@@ -13,6 +13,7 @@ export class GraphApiError extends Error {
   constructor(
     readonly status: number,
     readonly retryAfterMs?: number,
+    readonly reason?: 'mailbox_rest_unavailable',
   ) {
     super(`Microsoft Graph request failed (${status})`);
   }
@@ -23,6 +24,54 @@ type GraphRoot = 'me' | 'chats' | 'teams' | 'users';
 export interface GraphClientOptions {
   roots?: readonly GraphRoot[];
   headers?: Readonly<Record<string, string>>;
+  diagnoseMailboxErrors?: boolean;
+}
+
+function asObject(value: unknown): Record<string, unknown> | undefined {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : undefined;
+}
+
+async function readGraphObject(response: Response, signal: AbortSignal, maxBytes: number) {
+  const reader = response.body?.getReader();
+  if (!reader) return { success: true };
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  try {
+    while (true) {
+      signal.throwIfAborted();
+      const part = await reader.read();
+      if (part.done) break;
+      size += part.value.byteLength;
+      if (size > maxBytes) throw new Error('Graph response exceeds size limit');
+      chunks.push(part.value);
+    }
+    signal.throwIfAborted();
+    const text = Buffer.concat(chunks).toString('utf8');
+    const data = text ? asObject(JSON.parse(text)) : { success: true };
+    if (!data) throw new Error('Invalid Graph response');
+    return data;
+  } finally {
+    await reader.cancel().catch(() => {});
+    reader.releaseLock();
+  }
+}
+
+async function mailboxErrorReason(response: Response, signal: AbortSignal) {
+  const body = await readGraphObject(response, signal, 16 * 1024).catch(() => undefined);
+  signal.throwIfAborted();
+  let error = asObject(body?.error);
+  while (error) {
+    if (
+      error.code === 'MailboxNotEnabledForRESTAPI' ||
+      error.code === 'MailboxNotSupportedForRESTAPI'
+    ) {
+      return 'mailbox_rest_unavailable' as const;
+    }
+    error = asObject(error.innererror ?? error.innerError);
+  }
+  return undefined;
 }
 function segments(path: string): string[] {
   try {
@@ -43,6 +92,7 @@ function ownerAlias(parts: string[]): string[] {
 export class GraphClient {
   private readonly roots: ReadonlySet<GraphRoot>;
   private readonly headers: Headers;
+  private readonly diagnoseMailboxErrors: boolean;
   constructor(
     private readonly token: string,
     options: GraphClientOptions = {},
@@ -52,6 +102,7 @@ export class GraphClient {
       throw new GraphInputError();
     this.roots = new Set(roots);
     this.headers = new Headers(options.headers);
+    this.diagnoseMailboxErrors = options.diagnoseMailboxErrors ?? false;
     if (!token || ![...token].every((c) => c.charCodeAt(0) > 32 && c.charCodeAt(0) < 127))
       throw new Error('A user access token is required');
   }
@@ -114,41 +165,29 @@ export class GraphClient {
             headers,
             ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
           });
-          if (!result.ok) await result.body?.cancel();
+          // A diagnosed 404 is never retried by the pacer. All other error bodies
+          // are discarded before a possible retry.
+          if (!result.ok && !(this.diagnoseMailboxErrors && result.status === 404)) {
+            await result.body?.cancel();
+          }
           return result;
         },
       );
       if (response.status === 401) throw new UpstreamCredentialInvalidError();
-      if (!response.ok)
+      if (!response.ok) {
+        const reason =
+          this.diagnoseMailboxErrors && response.status === 404
+            ? await mailboxErrorReason(response, signal)
+            : undefined;
         throw new GraphApiError(
           response.status,
           rateLimit?.nextWaitMs ??
             parseRetryAfterMs(response.headers.get('retry-after'), Date.now()),
+          reason,
         );
-      if (response.status === 204 || response.status === 205) return { success: true };
-      const reader = response.body?.getReader();
-      if (!reader) return { success: true };
-      const chunks: Uint8Array[] = [];
-      let size = 0;
-      try {
-        while (true) {
-          signal.throwIfAborted();
-          const part = await reader.read();
-          if (part.done) break;
-          size += part.value.byteLength;
-          if (size > 2 * 1024 * 1024) throw new Error('Graph response exceeds size limit');
-          chunks.push(part.value);
-        }
-        signal.throwIfAborted();
-        const text = Buffer.concat(chunks).toString('utf8');
-        const data: unknown = text ? JSON.parse(text) : { success: true };
-        if (!data || typeof data !== 'object' || Array.isArray(data))
-          throw new Error('Invalid Graph response');
-        return data as Record<string, unknown>;
-      } finally {
-        await reader.cancel().catch(() => {});
-        reader.releaseLock();
       }
+      if (response.status === 204 || response.status === 205) return { success: true };
+      return readGraphObject(response, signal, 2 * 1024 * 1024);
     });
   }
 }
