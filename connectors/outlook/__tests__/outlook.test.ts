@@ -21,6 +21,48 @@ const message = {
   body: { contentType: 'Text', content: 'Hello there' },
   toRecipients: [{ emailAddress: { address: 'recipient@example.test' } }],
 };
+
+it.each([
+  { code: 'MailboxNotEnabledForRESTAPI' },
+  { code: 'ErrorItemNotFound', innerError: { code: 'MailboxNotSupportedForRESTAPI' } },
+])('reports the supported mailbox diagnostic for Graph error %j', async (error) => {
+  const fetch = vi.fn(
+    async () =>
+      new Response(
+        JSON.stringify({ error: { ...error, message: 'private-mailbox@example.test' } }),
+        {
+          status: 404,
+        },
+      ),
+  );
+  vi.stubGlobal('fetch', fetch);
+  const result = await calendar().callTool('calendar_list_calendars', { top: 1 });
+  const expected = {
+    error: { code: 'PROVIDER_ERROR', status: 404, reason: 'mailbox_rest_unavailable' },
+  };
+  expect(result).toEqual({
+    isError: true,
+    structuredContent: expected,
+    content: [{ type: 'text', text: JSON.stringify(expected) }],
+  });
+  expect(fetch).toHaveBeenCalledOnce();
+});
+
+it.each([
+  JSON.stringify({ error: { code: 'private-value', message: 'MailboxNotEnabledForRESTAPI' } }),
+  '{incomplete json',
+  JSON.stringify({ error: { code: 'MailboxNotEnabledForRESTAPI', message: 'x'.repeat(20_000) } }),
+])('keeps unknown, malformed, or oversized Graph 404 responses generic', async (body) => {
+  vi.stubGlobal('fetch', async () => new Response(body, { status: 404 }));
+  const result = await calendar().callTool('calendar_list_calendars', { top: 1 });
+  const expected = { error: { code: 'PROVIDER_ERROR', status: 404 } };
+  expect(result).toEqual({
+    isError: true,
+    structuredContent: expected,
+    content: [{ type: 'text', text: JSON.stringify(expected) }],
+  });
+});
+
 it('publishes independent OAuth offers covering both account populations', () => {
   expect(endpoints.map((e) => [e.path, e.package.metadata.id, e.auth])).toEqual([
     ['/mail/mcp', 'outlook-mail', 'oauth'],
