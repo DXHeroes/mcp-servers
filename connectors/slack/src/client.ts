@@ -9,6 +9,7 @@ import {
 import { UpstreamCredentialInvalidError } from '@dxheroes/mcp-runtime';
 
 const methods = new Set([
+  'auth.test',
   'conversations.list',
   'conversations.history',
   'conversations.replies',

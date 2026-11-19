@@ -36,9 +36,10 @@ it('offers only a delegated user OAuth route with the required Slack scopes', ()
     ],
   });
 });
-it('exposes the complete bridge tool set with six reads and three writes', async () => {
+it('exposes the complete bridge tool set with seven reads and three writes', async () => {
   const tools = await server().listTools();
   expect(tools.map((t) => t.name)).toEqual([
+    'slack_get_identity',
     'slack_list_conversations',
     'slack_get_history',
     'slack_get_thread',
@@ -49,7 +50,7 @@ it('exposes the complete bridge tool set with six reads and three writes', async
     'slack_reply_in_thread',
     'slack_add_reaction',
   ]);
-  expect(tools.filter((t) => t.annotations?.readOnlyHint)).toHaveLength(6);
+  expect(tools.filter((t) => t.annotations?.readOnlyHint)).toHaveLength(7);
   expect(tools.some((t) => t.annotations?.destructiveHint)).toBe(false);
 });
 it.each([
@@ -199,6 +200,7 @@ it('rejects invalid identities, reversed ranges, unsafe pagination and unsupport
       { channel: 'C123', oldest: '9007199254740991.000002', latest: '9007199254740991.000001' },
     ],
     ['slack_list_conversations', { types: ['mpim'] }],
+    ['slack_get_identity', { user: 'U123' }],
     ['slack_get_thread', { channel: 'C123', ts: '1.000000', nextLink: 'https://other.example' }],
     ['slack_search_messages', { query: 'x', page: 101 }],
     ['slack_get_user', { user: 'https://evil.example' }],

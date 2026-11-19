@@ -40,10 +40,19 @@ interface Operation {
   description: string;
   schema: z.ZodType;
   method: string;
+  http: 'GET' | 'POST';
   read?: boolean;
   params?: (a: Args) => Args;
 }
 const operations: Operation[] = [
+  {
+    name: 'slack_get_identity',
+    description: 'Read the workspace and user identity for this Slack connection.',
+    schema: z.object({}).strict(),
+    method: 'auth.test',
+    http: 'POST',
+    read: true,
+  },
   {
     name: 'slack_list_conversations',
     description:
@@ -61,6 +70,7 @@ const operations: Operation[] = [
       })
       .strict(),
     method: 'conversations.list',
+    http: 'GET',
     read: true,
     params: (a) => ({ ...a, types: (a.types as string[]).join(',') }),
   },
@@ -73,6 +83,7 @@ const operations: Operation[] = [
       .strict()
       .refine(ordered, 'Reversed time range'),
     method: 'conversations.history',
+    http: 'GET',
     read: true,
   },
   {
@@ -84,6 +95,7 @@ const operations: Operation[] = [
       .strict()
       .refine(ordered, 'Reversed time range'),
     method: 'conversations.replies',
+    http: 'GET',
     read: true,
   },
   {
@@ -102,6 +114,7 @@ const operations: Operation[] = [
       .strict()
       .refine((a) => !(a.page && a.cursor), 'Choose page or cursor'),
     method: 'search.messages',
+    http: 'GET',
     read: true,
   },
   {
@@ -110,6 +123,7 @@ const operations: Operation[] = [
       'List one workspace user page. Email fields require separate provider permission and are not requested by this connector.',
     schema: z.object(page).strict(),
     method: 'users.list',
+    http: 'GET',
     read: true,
   },
   {
@@ -117,6 +131,7 @@ const operations: Operation[] = [
     description: 'Read a basic workspace user profile by Slack user ID.',
     schema: z.object({ user: z.string().regex(/^[UW][A-Z0-9]{1,63}$/) }).strict(),
     method: 'users.info',
+    http: 'GET',
     read: true,
   },
   {
@@ -125,6 +140,7 @@ const operations: Operation[] = [
       'Post a message to an existing conversation as the connected user. Explicit Slack mentions can notify people. Link/media unfurls default off.',
     schema: z.object(message).strict(),
     method: 'chat.postMessage',
+    http: 'POST',
     params: (a) => ({ ...a, parse: 'none' }),
   },
   {
@@ -135,6 +151,7 @@ const operations: Operation[] = [
       .object({ ...message, thread_ts: timestamp, reply_broadcast: z.boolean().optional() })
       .strict(),
     method: 'chat.postMessage',
+    http: 'POST',
     params: (a) => ({ ...a, parse: 'none' }),
   },
   {
@@ -152,6 +169,7 @@ const operations: Operation[] = [
       })
       .strict(),
     method: 'reactions.add',
+    http: 'POST',
   },
 ];
 export class SlackServer extends McpServer {
@@ -191,7 +209,7 @@ export class SlackServer extends McpServer {
       const args = parsed.data as Args;
       const result = await withToolCallDeadline(
         20_000,
-        () => this.client!.request(op.method, op.read ? 'GET' : 'POST', op.params?.(args) ?? args),
+        () => this.client!.request(op.method, op.http, op.params?.(args) ?? args),
         context,
       );
       return {
