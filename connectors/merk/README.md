@@ -31,6 +31,8 @@ All tools are read-only; no resources or prompts are exposed:
 
 ## Limits and troubleshooting
 
+Tool calls have a 20-second deadline. A timeout returns an error and leaves the requested information unknown.
+
 Fields and datasets depend on country, subscription and upstream availability. Use
 `merk_subscription_info` to inspect plan/credit information and `merk_enums` for accepted enum
 values. Pagination is explicit where offered; avoid broad searches when a company ID is known.

@@ -96,12 +96,21 @@ describe('safeFetch wiring', () => {
     expect(init.signal).toBeInstanceOf(AbortSignal);
   });
 
-  it('should let an explicit signal win over the default deadline', async () => {
-    const controller = new AbortController();
-    await fetchJson(URL_UNDER_TEST, { source: 'ARES', signal: controller.signal });
-    const init = mockSafeFetch.mock.calls[0]?.[1];
-    expect((init as RequestInit).signal).toBe(controller.signal);
-  });
+  it.each(['deadline', 'caller'] as const)(
+    'honors %s cancellation with an explicit signal',
+    async (source) => {
+      const caller = new AbortController();
+      const deadline = new AbortController();
+      using timeout = vi.spyOn(AbortSignal, 'timeout').mockReturnValue(deadline.signal);
+      await fetchJson(URL_UNDER_TEST, { source: 'ARES', signal: caller.signal });
+      const signal = (mockSafeFetch.mock.calls[0]?.[1] as RequestInit | undefined)?.signal;
+      expect(signal?.aborted).toBe(false);
+      (source === 'deadline' ? deadline : caller).abort(source);
+      expect(signal?.aborted).toBe(true);
+      expect(signal?.reason).toBe(source);
+      expect(timeout).toHaveBeenCalledWith(15_000);
+    },
+  );
 
   it('should merge caller headers with the defaults', async () => {
     await fetchJson(URL_UNDER_TEST, {

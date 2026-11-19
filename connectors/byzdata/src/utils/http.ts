@@ -147,6 +147,7 @@ export async function upstreamRequest(
 ): Promise<Response> {
   let response: Response;
   try {
+    const deadline = AbortSignal.timeout(REQUEST_TIMEOUT_MS);
     response = await safeFetch(url, {
       ...init,
       // The connector host's own policy (`MCP_ALLOW_PRIVATE_NETWORK_TARGETS`)
@@ -158,7 +159,7 @@ export async function upstreamRequest(
       // `safeFetch` does not implement a timeout, so the deadline has to be
       // carried in `init` exactly as it was before the switch. Losing it here
       // is a regression that only shows up against a hanging registry.
-      signal: init.signal ?? AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+      signal: init.signal ? AbortSignal.any([init.signal, deadline]) : deadline,
       headers,
     });
   } catch (error) {

@@ -46,6 +46,8 @@ tools are destructive hints and should require gateway approval. An annotation i
 
 ## Limits and troubleshooting
 
+Tool calls have a 20-second deadline. If a write times out, check the record before retrying.
+
 List operations support the filters/pagination accepted by their schemas. Generic evidence tools
 can touch data beyond the named convenience tools, so restrict them when users do not need that
 scope. A 401 means rejected username/password; 402 usually means REST writes are not licensed; 403
