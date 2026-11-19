@@ -1,6 +1,6 @@
 {
   "name": "@dxheroes/mcp-outlook",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": true,
   "description": "Outlook mail and calendar MCP endpoints for personal and work Microsoft accounts",
   "type": "module",
