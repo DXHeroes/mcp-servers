@@ -24,10 +24,17 @@ export class GoogleApiError extends Error {
   }
 }
 
+const serviceUrls = {
+  tasks: 'https://tasks.googleapis.com/tasks/v1/',
+  people: 'https://people.googleapis.com/v1/',
+  gmail: 'https://gmail.googleapis.com/gmail/v1/',
+  searchConsole: 'https://searchconsole.googleapis.com/',
+} as const;
+
 export class GoogleClient {
   constructor(
     private readonly accessToken: string,
-    private readonly service: 'tasks' | 'people' | 'gmail' = 'tasks',
+    private readonly service: keyof typeof serviceUrls = 'tasks',
   ) {
     if (
       !accessToken ||
@@ -42,12 +49,7 @@ export class GoogleClient {
     query: Record<string, unknown>,
     body?: unknown,
   ): Promise<Record<string, unknown>> {
-    const base =
-      this.service === 'people'
-        ? 'https://people.googleapis.com/v1/'
-        : this.service === 'gmail'
-          ? 'https://gmail.googleapis.com/gmail/v1/'
-          : 'https://tasks.googleapis.com/tasks/v1/';
+    const base = serviceUrls[this.service];
     const url = new URL(`${base}${path}`);
     const origin = new URL(base);
     if (

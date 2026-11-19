@@ -3,7 +3,7 @@
 Independent HTTP service endpoints using the user's access token supplied by a gateway.
 Google Tasks uses `/tasks/mcp`, Contacts uses `/contacts/mcp`, and the separate Workspace
 directory offer uses `/directory/mcp`. Gmail's send-only offer uses `/gmail/mcp`; the separate read-only offer uses `/gmail-read/mcp`.
-`/mcp` and stdio are deliberately not exposed for this
+Search Console uses `/search-console/mcp`. `/mcp` and stdio are deliberately not exposed for this
 multi-service package. Source is MIT; the shared kit retains its license.
 
 ## Authentication and setup
@@ -513,3 +513,26 @@ reject old proof immediately for subsequent requests, even within its remaining
 approved pins match. Source tests use actual frozen-producer vectors, the HTTP
 runtime, Google clients and owned loopback providers. They do not establish a new
 released artifact, installed mount, real enrollment, Google grant or mail delivery.
+
+## Google Search Console
+
+Map the offer ID `google-search-console` to the deployed connector URL ending in
+`/search-console/mcp`. Enable **Google Search Console API** in the OAuth client’s
+Google Cloud project. Configure a per-user Web client as described above and request
+`https://www.googleapis.com/auth/webmasters.readonly`. Each user needs access to the
+property in Search Console. The offer requests offline access and prompts users to
+choose an account and grant consent on connect and reconnect.
+[Google OAuth parameters](https://developers.google.com/identity/protocols/oauth2/web-server)
+
+| Read tool | Inputs and results |
+| --- | --- |
+| `search_console_list_properties` | Lists the connected account’s properties and permission levels. |
+| `search_console_get_property` | Takes the exact `siteUrl` returned by the list and reads its permission level. |
+| `search_console_query_analytics` | Takes `siteUrl`, `startDate` and `endDate` (inclusive Pacific dates, up to 31 days), optional `dimensions` and `rowLimit` (default 10, maximum 100). Returns one report. |
+| `search_console_inspect_url` | Takes `siteUrl` and one absolute `inspectionUrl` in that property. Reads Google’s indexed version. |
+
+A domain property uses an identifier such as `sc-domain:example.com`. For a URL-prefix
+property, preserve the exact scheme, host and path from the property list. Search Analytics
+may return no rows for a valid query. URL Inspection uses per-site and per-project quotas.
+Check permissions and quota usage on a 403 and respect retry timing on a 429.
+[API reference](https://developers.google.com/webmaster-tools/v1/api_reference_index) · [Quota limits](https://developers.google.com/webmaster-tools/limits)
