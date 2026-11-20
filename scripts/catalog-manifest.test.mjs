@@ -18,6 +18,7 @@ test('generates OAuth service offers without a package-level API-key alias', asy
         toggl: 'https://toggl.example/mcp',
         'google-gmail-send': 'https://connector.example/gmail/mcp',
         'google-gmail-read': 'https://connector.example/gmail-read/mcp',
+        'google-search-console': 'https://connector.example/search-console/mcp',
       }),
     );
     const { stdout } = await exec(process.execPath, ['scripts/catalog-manifest.mjs', file]);
@@ -30,6 +31,18 @@ test('generates OAuth service offers without a package-level API-key alias', asy
       'https://www.googleapis.com/auth/tasks',
     ]);
     assert.equal(offers[0].auth.oauthDefaults.authorizeParams.access_type, 'offline');
+    const search = offers.find(({ id }) => id === 'google-search-console');
+    assert.equal(search.endpoint.url, 'https://connector.example/search-console/mcp');
+    assert.equal(search.auth.type, 'oauth');
+    assert.deepEqual(search.auth.credentialModes, ['per_user']);
+    assert.equal(search.auth.credentialDelivery, 'connector_base64url');
+    assert.deepEqual(search.auth.oauthDefaults.scopes, [
+      'https://www.googleapis.com/auth/webmasters.readonly',
+    ]);
+    assert.deepEqual(search.auth.oauthDefaults.authorizeParams, {
+      access_type: 'offline',
+      prompt: 'consent select_account',
+    });
     assert.equal(offers[1].auth.type, 'api_key');
     assert.equal(offers[2].id, 'google-gmail-send');
     assert.equal(offers[2].auth.type, 'oauth');

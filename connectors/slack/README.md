@@ -81,6 +81,7 @@ shared API-key offer. See [runtime authentication](../../docs/runtime.md).
 
 | Tool | Behavior |
 | --- | --- |
+| `slack_get_identity` | Connected workspace and user from [auth.test](https://docs.slack.dev/reference/methods/auth.test/), with no additional OAuth scope |
 | `slack_list_conversations` | One page of public/private channels and one-to-one DMs |
 | `slack_get_history` | One conversation history page, with optional time range |
 | `slack_get_thread` | One thread page including its parent |
@@ -102,7 +103,7 @@ Posting allows 1–4,000 text characters, a connector input bound. Explicit Slac
 mentions can notify people. Link and media unfurls default off; `reply_broadcast`
 can notify the whole conversation. No identity override, arbitrary blocks,
 attachments or provider URL is accepted. Emoji names omit outer colons, e.g.
-`thumbsup` or `thumbsup::skin-tone-6`. Six tools are read-only; three are writes.
+`thumbsup` or `thumbsup::skin-tone-6`. Seven tools are read-only and three are writes.
 The gateway's managed-preset write policy still controls integrator access.
 
 Each complete tool call has one 20-second deadline, including DNS, HTTP, body

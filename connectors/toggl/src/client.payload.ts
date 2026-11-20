@@ -150,6 +150,16 @@ export function compactList(
   };
 }
 
+function timeEntryStart(item: unknown): number {
+  if (item === null || typeof item !== 'object' || !('start' in item)) {
+    return Number.NEGATIVE_INFINITY;
+  }
+  const timestamp = typeof item.start === 'string' ? Date.parse(item.start) : Number.NaN;
+  // Keep undated entries after dated ones. Stable sorting preserves ties and
+  // the relative order of entries that have no usable start.
+  return Number.isNaN(timestamp) ? Number.NEGATIVE_INFINITY : timestamp;
+}
+
 /**
  * Envelope for a time entry listing.
  *
@@ -161,8 +171,17 @@ export function timeEntriesEnvelope(
   items: unknown[],
   effectiveLimit: number,
 ): Record<string, unknown> {
+  const hasMore = items.length > effectiveLimit;
+  const timeEntries = hasMore
+    ? items
+        .map((item) => ({ item, start: timeEntryStart(item) }))
+        .sort((a, b) => (a.start === b.start ? 0 : b.start - a.start))
+        .slice(0, effectiveLimit)
+        .map(({ item }) => item)
+    : items.slice(0, effectiveLimit);
+
   return {
-    time_entries: items.slice(0, effectiveLimit),
+    time_entries: timeEntries,
     returned: Math.min(items.length, effectiveLimit),
     // Exact about the cut, and only about the cut: the whole array Toggl sent
     // was fetched, so whether *this client* dropped anything is known rather
@@ -170,13 +189,12 @@ export function timeEntriesEnvelope(
     // takes no `limit`/`page`; that Toggl therefore never truncates the range
     // itself does not follow from that, so `total_received` is named for what
     // it counts — what arrived — and not for the size of the date range.
-    has_more: items.length > effectiveLimit,
+    has_more: hasMore,
     limit: effectiveLimit,
     total_received: items.length,
-    pagination:
-      items.length > effectiveLimit
-        ? `Toggl offers no limit or page parameter on this endpoint, so this is a client-side cut of what it sent: the ${effectiveLimit} newest entries were kept and the older ones dropped. To reach the rest, move the window backwards — set end_date at or before the start of the oldest entry above — or raise limit (max 200). Narrowing the window towards today returns the same entries again.`
-        : undefined,
+    pagination: hasMore
+      ? `Toggl offers no limit or page parameter on this endpoint, so this is a client-side cut of what it sent: the ${effectiveLimit} newest entries were kept and the older ones dropped. To reach the rest, move the window backwards — set end_date at or before the start of the oldest entry above — or raise limit (max 200). Narrowing the window towards today returns the same entries again.`
+      : undefined,
   };
 }
 

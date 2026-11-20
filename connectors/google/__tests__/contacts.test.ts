@@ -25,6 +25,7 @@ it('separates contact and Workspace-only directory offers from Tasks', () => {
     ['/directory/mcp', 'google-directory', 'oauth'],
     ['/gmail/mcp', 'google-gmail-send', 'oauth'],
     ['/gmail-read/mcp', 'google-gmail-read', 'oauth'],
+    ['/search-console/mcp', 'google-search-console', 'oauth'],
   ]);
   expect(google.contactsPackage.metadata.oauthDefaults?.scopes).toEqual([
     'https://www.googleapis.com/auth/contacts',

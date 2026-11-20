@@ -5,8 +5,8 @@
  * Provides 30 tools covering invoices, contacts, products, orders, bank statements, and generic records.
  */
 
-import type { ApiKeyConfig, McpResource, McpTool } from '@dxheroes/mcp-kit';
-import { McpServer } from '@dxheroes/mcp-kit';
+import type { ApiKeyConfig, McpResource, McpTool, ToolCallContext } from '@dxheroes/mcp-kit';
+import { McpServer, withToolCallDeadline } from '@dxheroes/mcp-kit';
 import { z } from 'zod';
 import { FlexiApiError, FlexiClient } from './client.js';
 import type { ToolDef } from './tool-annotations.js';
@@ -65,7 +65,7 @@ export class FlexiMcpServer extends McpServer {
     }));
   }
 
-  async callTool(name: string, args: unknown): Promise<unknown> {
+  async callTool(name: string, args: unknown, context?: ToolCallContext): Promise<unknown> {
     if (!this.client) {
       return this.errorResponse(
         'API_KEY_REQUIRED',
@@ -108,7 +108,7 @@ export class FlexiMcpServer extends McpServer {
     }
 
     try {
-      const result = await toolDef.handler(parsed);
+      const result = await withToolCallDeadline(20_000, () => toolDef.handler(parsed), context);
       return {
         content: [
           {
@@ -118,6 +118,15 @@ export class FlexiMcpServer extends McpServer {
         ],
       };
     } catch (error) {
+      if (error instanceof DOMException && error.name === 'TimeoutError') {
+        return this.errorResponse(
+          'UPSTREAM_TIMEOUT',
+          'The provider did not respond before the tool deadline.',
+          toolDef.annotations.readOnlyHint
+            ? undefined
+            : 'The write outcome is unknown. Check the record before retrying.',
+        );
+      }
       return this.handleApiError(error);
     }
   }

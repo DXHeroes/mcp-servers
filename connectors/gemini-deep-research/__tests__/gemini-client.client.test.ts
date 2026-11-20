@@ -147,7 +147,7 @@ describe('GeminiClient', () => {
         expect.objectContaining({
           store: true,
           background: true,
-          agent: 'deep-research-pro-preview-12-2025',
+          agent: 'deep-research-preview-04-2026',
         }),
         expect.objectContaining({ signal: expect.any(AbortSignal), maxRetries: 0 }),
       );
@@ -351,10 +351,12 @@ describe('GeminiClient', () => {
 
       expect(mocks.interactions.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          model: 'gemini-2.5-pro',
+          model: 'gemini-3.8-flash',
           previous_interaction_id: 'prev-interaction-id',
           input: 'What about X?',
+          automatic_continuation: false,
         }),
+        expect.objectContaining({ maxRetries: 0 }),
       );
 
       // Should NOT have agent parameter

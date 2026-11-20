@@ -5,8 +5,14 @@
  * Provides 23 tools covering company details, financials, employees, fleet, relations, and more.
  */
 
-import type { ApiKeyConfig, McpResource, McpTool, ToolAnnotations } from '@dxheroes/mcp-kit';
-import { McpServer } from '@dxheroes/mcp-kit';
+import type {
+  ApiKeyConfig,
+  McpResource,
+  McpTool,
+  ToolAnnotations,
+  ToolCallContext,
+} from '@dxheroes/mcp-kit';
+import { McpServer, withToolCallDeadline } from '@dxheroes/mcp-kit';
 import { z } from 'zod';
 import { MerkApiError, MerkClient } from './client.js';
 import {
@@ -130,7 +136,7 @@ export class MerkMcpServer extends McpServer {
     }));
   }
 
-  async callTool(name: string, args: unknown): Promise<unknown> {
+  async callTool(name: string, args: unknown, context?: ToolCallContext): Promise<unknown> {
     if (!this.client) {
       return this.errorResponse(
         'API_KEY_REQUIRED',
@@ -175,7 +181,7 @@ export class MerkMcpServer extends McpServer {
 
     // Execute
     try {
-      const result = await toolDef.handler(parsed);
+      const result = await withToolCallDeadline(20_000, () => toolDef.handler(parsed), context);
       return {
         content: [
           {
@@ -185,6 +191,12 @@ export class MerkMcpServer extends McpServer {
         ],
       };
     } catch (error) {
+      if (error instanceof DOMException && error.name === 'TimeoutError') {
+        return this.errorResponse(
+          'UPSTREAM_TIMEOUT',
+          'The provider did not respond before the tool deadline.',
+        );
+      }
       return this.handleApiError(error);
     }
   }

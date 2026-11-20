@@ -14,7 +14,7 @@
     "@dxheroes/mcp-graph": "workspace:*",
     "@dxheroes/mcp-kit": "workspace:*",
     "@dxheroes/mcp-runtime": "workspace:*",
-    "zod": "4.6.6"
+    "zod": "4.6.7"
   },
   "devDependencies": {
     "@modelcontextprotocol/client": "2.4.0",

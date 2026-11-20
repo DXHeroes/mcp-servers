@@ -4,6 +4,7 @@ import type { ConnectorEndpoint } from '@dxheroes/mcp-runtime';
 import { GoogleContactsServer, GoogleDirectoryServer } from './contacts.js';
 import { GoogleGmailServer } from './gmail.js';
 import { GoogleGmailReadServer } from './gmail-read.js';
+import { GoogleSearchConsoleServer } from './search-console.js';
 import { GoogleTasksServer } from './tasks.js';
 export const mcpPackage: McpPackage = {
   metadata: {
@@ -94,6 +95,22 @@ export const gmailReadPackage: McpPackage = {
   },
   createServer: (credential) => new GoogleGmailReadServer(credential),
 };
+export const searchConsolePackage: McpPackage = {
+  ...tasksPackage,
+  metadata: {
+    ...tasksPackage.metadata,
+    id: 'google-search-console',
+    name: 'Google Search Console',
+    description: 'Check property access, read Search Analytics reports and inspect indexed URLs.',
+    docsUrl: 'https://developers.google.com/webmaster-tools/v1/api_reference_index',
+    oauthDefaults: {
+      ...tasksPackage.metadata.oauthDefaults!,
+      scopes: ['https://www.googleapis.com/auth/webmasters.readonly'],
+      authorizeParams: { access_type: 'offline', prompt: 'consent select_account' },
+    },
+  },
+  createServer: (credential) => new GoogleSearchConsoleServer(credential),
+};
 export const endpoints: readonly ConnectorEndpoint[] = [
   { path: '/tasks/mcp', package: tasksPackage, auth: 'oauth' },
   { path: '/contacts/mcp', package: contactsPackage, auth: 'oauth' },
@@ -105,6 +122,7 @@ export const endpoints: readonly ConnectorEndpoint[] = [
     auth: 'oauth',
     googleMailPurpose: 'gmail_readonly',
   },
+  { path: '/search-console/mcp', package: searchConsolePackage, auth: 'oauth' },
 ];
 export { GoogleContactsServer, GoogleDirectoryServer } from './contacts.js';
 export { GoogleGmailServer } from './gmail.js';

@@ -7,7 +7,7 @@
 
 import { setTimeout as delay } from 'node:timers/promises';
 import type { ToolCallContext } from '@dxheroes/mcp-kit';
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI, type Interactions } from '@google/genai';
 import { classifyGeminiError, GeminiApiError, isCredentialProblem } from './errors.js';
 
 export interface DeepResearchInput {
@@ -23,69 +23,92 @@ export interface DeepResearchResult {
   error?: string;
 }
 
-/**
- * Extract text from a Content_2 item.
- * Content_2 is a union type; TextContent has `type: 'text'` and `text?: string`.
- */
+const INTERACTION_REQUEST = {
+  headers: { 'Api-Revision': '2026-05-20' },
+  maxRetries: 0,
+};
+
+const RESEARCH_FAILURES = new Map([
+  ['failed', 'Research failed. Check API key and try again.'],
+  ['cancelled', 'Research was cancelled.'],
+  ['requires_action', 'Research requires action that cannot be handled automatically.'],
+  ['incomplete', 'Research returned incomplete results.'],
+  ['requires_continuation', 'Research requires continuation that cannot be handled automatically.'],
+  ['budget_exceeded', 'Research exceeded the provider budget.'],
+]);
+
+interface InteractionContent {
+  type: string;
+  text?: string;
+  annotations?: Array<{
+    type: string;
+    url?: string;
+    document_uri?: string;
+  }>;
+}
+
+type InteractionOutput = Partial<
+  Pick<Interactions.Interaction, 'id' | 'status' | 'output_text' | 'steps'>
+> & {
+  // Responses for older stored interactions may still carry the original shape.
+  outputs?: InteractionContent[];
+};
+
 export function extractTextFromContent(content: { type: string; text?: string }): string {
-  if (content.type === 'text' && typeof content.text === 'string') {
-    return content.text;
+  return content.type === 'text' && typeof content.text === 'string' ? content.text : '';
+}
+
+function extractInteractionText(result: InteractionOutput): string {
+  if (result.output_text) return result.output_text;
+  const outputs = result.outputs ?? [];
+  for (let i = outputs.length - 1; i >= 0; i--) {
+    const output = outputs[i];
+    if (!output) continue;
+    const text = extractTextFromContent(output);
+    if (text) return text;
   }
   return '';
 }
 
-/**
- * Extract citation sources from an Interaction result.
- *
- * Annotation is a discriminated union: URLCitation | FileCitation | PlaceCitation.
- */
-export function extractCitations(result: {
-  id?: string;
-  status?: string;
-  outputs?: Array<{
-    type: string;
-    annotations?: Array<{
-      type: string;
-      url?: string;
-      document_uri?: string;
-    }>;
-  }>;
-}): string[] {
-  const citations: string[] = [];
-
+/** Collect URL and file citations from model output, including legacy responses. */
+export function extractCitations(result: InteractionOutput): string[] {
+  const citations = new Set<string>();
   try {
-    const outputs = result.outputs || [];
+    const modelOutputs = result.steps?.flatMap((step) =>
+      step.type === 'model_output' ? (step.content ?? []) : [],
+    );
+    const outputs = modelOutputs?.length ? modelOutputs : (result.outputs ?? []);
+
     for (const output of outputs) {
-      if (output.type === 'text' && output.annotations) {
-        for (const annotation of output.annotations) {
-          if (annotation.type === 'url_citation' && annotation.url) {
-            citations.push(annotation.url);
-          } else if (annotation.type === 'file_citation' && annotation.document_uri) {
-            citations.push(annotation.document_uri);
-          }
+      if (output.type !== 'text') continue;
+      for (const annotation of output.annotations ?? []) {
+        if (annotation.type === 'url_citation' && annotation.url) {
+          citations.add(annotation.url);
+        } else if (annotation.type === 'file_citation' && annotation.document_uri) {
+          citations.add(annotation.document_uri);
         }
       }
     }
   } catch {
-    // Silently ignore extraction errors
+    // Return the report even when optional citation data is malformed.
   }
 
-  return [...new Set(citations)]; // Deduplicate
+  return [...citations];
 }
 
 /**
  * Gemini API client for Deep Research
  *
- * Uses the Interactions API with the deep-research-pro-preview agent.
+ * Uses the Interactions API with the Deep Research agent.
  * Research tasks run in the background and may take several minutes.
  */
 export class GeminiClient {
   private client: GoogleGenAI;
-  private agentName = 'deep-research-pro-preview-12-2025';
-  private followUpModel = 'gemini-2.5-pro';
+  private agentName = 'deep-research-preview-04-2026';
+  private followUpModel = 'gemini-3.8-flash';
 
   constructor(apiKey: string) {
-    this.client = new GoogleGenAI({ apiKey });
+    this.client = new GoogleGenAI({ apiKey, httpOptions: { apiVersion: 'v1beta' } });
   }
 
   /**
@@ -169,7 +192,7 @@ export class GeminiClient {
         background: true,
         store: true,
       },
-      { signal: context.signal, maxRetries: 0 },
+      { ...INTERACTION_REQUEST, signal: context.signal },
     );
 
     const interactionId = interaction.id;
@@ -184,68 +207,28 @@ export class GeminiClient {
       while (Date.now() - startTime < maxWaitMs) {
         context.signal.throwIfAborted();
         const result = await this.client.interactions.get(interactionId, undefined, {
+          ...INTERACTION_REQUEST,
           signal: context.signal,
-          maxRetries: 0,
         });
 
         if (result.status === 'completed') {
-          const outputs = result.outputs || [];
-          // Find the last text content in outputs
-          let content = '';
-          for (let i = outputs.length - 1; i >= 0; i--) {
-            const output = outputs[i];
-            if (!output) continue;
-            const text = extractTextFromContent(output);
-            if (text) {
-              content = text;
-              break;
-            }
-          }
-
           console.error(`[GeminiDeepResearch] Research completed: ${interactionId}`);
 
           return {
-            content,
+            content: extractInteractionText(result),
             interactionId: result.id,
             citations: extractCitations(result),
             status: 'completed',
           };
         }
 
-        if (result.status === 'failed') {
-          console.error(`[GeminiDeepResearch] Research failed: ${interactionId}`);
+        const error = RESEARCH_FAILURES.get(result.status);
+        if (error) {
+          console.warn(`[GeminiDeepResearch] Research ${result.status}: ${interactionId}`);
 
-          return {
-            content: '',
-            interactionId: result.id,
-            status: 'failed',
-            error: 'Research failed. Check API key and try again.',
-          };
+          return { content: '', interactionId: result.id, status: 'failed', error };
         }
 
-        if (result.status === 'cancelled') {
-          console.warn(`[GeminiDeepResearch] Research cancelled: ${interactionId}`);
-
-          return {
-            content: '',
-            interactionId: result.id,
-            status: 'failed',
-            error: 'Research was cancelled.',
-          };
-        }
-
-        if (result.status === 'requires_action') {
-          console.warn(`[GeminiDeepResearch] Research requires action: ${interactionId}`);
-
-          return {
-            content: '',
-            interactionId: result.id,
-            status: 'failed',
-            error: 'Research requires action that cannot be handled automatically.',
-          };
-        }
-
-        // Log progress (status is 'in_progress')
         const elapsedMin = Math.round((Date.now() - startTime) / 60000);
         console.error(
           `[GeminiDeepResearch] Research in progress (${elapsedMin}min): ${interactionId}`,
@@ -265,8 +248,8 @@ export class GeminiClient {
         // Best effort remote cancellation, separately bounded after the request aborts.
         try {
           await this.client.interactions.cancel(interactionId, undefined, {
+            ...INTERACTION_REQUEST,
             signal: AbortSignal.timeout(5000),
-            maxRetries: 0,
           });
         } catch {
           /* Provider work may continue; never expose its error body. */
@@ -296,25 +279,18 @@ export class GeminiClient {
         input: question,
         model: this.followUpModel,
         previous_interaction_id: previousInteractionId,
+        // A continuation sends another billable create request.
+        automatic_continuation: false,
       },
-      ...(context ? [{ signal: context.signal, maxRetries: 0 }] : []),
+      { ...INTERACTION_REQUEST, signal: context?.signal },
     );
 
-    const outputs = interaction.outputs || [];
-    // Find text content in outputs
-    let content = '';
-    for (let i = outputs.length - 1; i >= 0; i--) {
-      const output = outputs[i];
-      if (!output) continue;
-      const text = extractTextFromContent(output);
-      if (text) {
-        content = text;
-        break;
-      }
+    if (interaction.status !== 'completed') {
+      throw new GeminiApiError('Gemini follow-up did not complete.', 'API_ERROR');
     }
 
     return {
-      content,
+      content: extractInteractionText(interaction),
       interactionId: interaction.id,
       status: 'completed',
     };
