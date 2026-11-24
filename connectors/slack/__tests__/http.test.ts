@@ -8,7 +8,7 @@ vi.mock('node:dns/promises', () => ({
 }));
 afterEach(() => vi.unstubAllGlobals());
 for (const era of ['auto', 'legacy'] as const)
-  it(`${era}: isolates two user accounts over real MCP HTTP for history, post and reaction`, async () => {
+  it(`${era}: isolates two user accounts over real MCP HTTP for identity, history, post and reaction`, async () => {
     const nativeFetch = globalThis.fetch;
     const sent: string[] = [];
     vi.stubGlobal('fetch', async (input: string | URL | Request, init?: RequestInit) => {
@@ -20,6 +20,15 @@ for (const era of ['auto', 'legacy'] as const)
       expect(owner).not.toContain('service-only');
       expect(headers.has('x-mcp-upstream-credential')).toBe(false);
       expect(headers.has('x-mcp-upstream-context')).toBe(false);
+      if (url.pathname === '/api/auth.test') {
+        expect(init?.method).toBe('POST');
+        expect(JSON.parse(String(init?.body))).toEqual({});
+        const identities: Record<string, { team_id: string; user_id: string }> = {
+          'Bearer xoxp-one': { team_id: 'T11', user_id: 'U11' },
+          'Bearer xoxp-two': { team_id: 'T22', user_id: 'U22' },
+        };
+        return Response.json({ ok: true, ...identities[owner] });
+      }
       if (init?.method === 'POST') sent.push(`${url.pathname}:${owner}`);
       if (owner === 'Bearer xoxp-revoked')
         return Response.json({ ok: false, error: 'token_revoked' });
@@ -69,7 +78,7 @@ for (const era of ['auto', 'legacy'] as const)
             },
           ),
         );
-        expect((await client.listTools()).tools).toHaveLength(9);
+        expect((await client.listTools()).tools).toHaveLength(10);
         if (token === 'xoxp-revoked') {
           await expect(
             client.callTool({ name: 'slack_get_history', arguments: { channel: 'C123' } }),
@@ -81,6 +90,12 @@ for (const era of ['auto', 'legacy'] as const)
           });
           continue;
         }
+        expect(await client.callTool({ name: 'slack_get_identity', arguments: {} })).toMatchObject({
+          structuredContent:
+            token === 'xoxp-one'
+              ? { ok: true, team_id: 'T11', user_id: 'U11' }
+              : { ok: true, team_id: 'T22', user_id: 'U22' },
+        });
         for (const call of [
           { name: 'slack_list_conversations', arguments: {} },
           { name: 'slack_get_history', arguments: { channel: 'C123' } },

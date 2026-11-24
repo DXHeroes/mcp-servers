@@ -318,7 +318,7 @@ describe('GeminiDeepResearchMcpServer', () => {
 
     it('should not claim a repeated research call is idempotent', async () => {
       // Calling deep_research twice starts a second background task and, per
-      // the tool's own description, costs another ~$2-5.
+      // the provider's estimate, typically costs another $1-3.
       const tools = await server.listTools();
       for (const tool of tools) {
         expect(tool.annotations?.idempotentHint, tool.name).toBe(false);

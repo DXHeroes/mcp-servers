@@ -4,6 +4,6 @@ packages:
   - templates/typescript-oauth
 
 overrides:
-  zod: 4.6.6
+  zod: 4.6.7
   '@hono/node-server': 2.1.6
   hono: 4.13.16

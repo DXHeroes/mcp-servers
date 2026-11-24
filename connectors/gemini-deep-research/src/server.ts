@@ -30,7 +30,7 @@ import { GeminiClient } from './gemini-client.js';
  * `idempotentHint` is false, and that is the honest part of this record.
  * Calling `deep_research` twice with the same topic is not a no-op: it starts
  * a second background task, produces a differently-worded report, and by the
- * tool's own description costs another ~$2-5 and another 5-20 minutes. The
+ * tool's own description typically costs another $1-3 and takes 5-20 minutes. The
  * cost is stated in the description where a reader will see it; there is no
  * annotation for "expensive", and inventing one here would not be read by
  * anything.
@@ -150,7 +150,7 @@ export class GeminiDeepResearchMcpServer extends McpServer {
           "Conducts comprehensive, multi-step research using Google's Deep Research Agent. " +
           'The agent autonomously searches the web, reads multiple sources, and synthesizes findings ' +
           'into detailed, cited reports. Research tasks typically take 5-20 minutes to complete. ' +
-          'Cost: ~$2-5 per research task. ' +
+          'Google estimates $1-3 for a typical research task. ' +
           'Best for: market analysis, technical research, literature reviews, competitive landscaping, ' +
           'due diligence, and any topic requiring thorough investigation.',
         inputSchema: DeepResearchInputSchema,
@@ -320,7 +320,7 @@ export class GeminiDeepResearchMcpServer extends McpServer {
    * Guarantee the content block carries usable text.
    *
    * `result.content` is typed `string`, but it is assembled from whatever the
-   * SDK put in `outputs` — a shape change upstream, or an interaction that
+   * SDK returned — a shape change upstream, or an interaction that
    * completes with no text output, and the value is an empty string or worse.
    * Putting that straight into `text` hands the model a content block with
    * nothing in it, and "no text" reads to a model exactly like "no findings".

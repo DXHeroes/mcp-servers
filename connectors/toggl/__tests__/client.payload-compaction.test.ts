@@ -7,6 +7,7 @@
 
 import { describe, expect, it } from 'vitest';
 import type { TogglClient } from '../src/client.js';
+import { timeEntriesEnvelope } from '../src/client.payload.js';
 import { API_TOKEN, mockFetch, mockResponse, setupTogglClientTest } from './client.helpers.js';
 
 describe('TogglClient', () => {
@@ -196,8 +197,14 @@ describe('TogglClient', () => {
       });
 
       it('should report has_more false when nothing was cut', async () => {
-        mockFetch.mockResolvedValue(mockResponse(entries(3)));
+        const upstream = [
+          { id: 1, start: '2026-11-10T08:00:00Z' },
+          { id: 2, start: '2026-11-14T08:00:00Z' },
+          { id: 3, start: '2026-11-11T08:00:00Z' },
+        ];
+        mockFetch.mockResolvedValue(mockResponse(upstream));
         const result = (await client.listTimeEntries({})) as Record<string, unknown>;
+        expect(result.time_entries).toEqual(upstream);
         expect(result.has_more).toBe(false);
         expect(result.returned).toBe(3);
         expect(result.pagination).toBeUndefined();
@@ -209,6 +216,35 @@ describe('TogglClient', () => {
         expect(result.returned).toBe(5);
         expect(result.limit).toBe(5);
         expect(result.has_more).toBe(true);
+      });
+
+      it('should keep the newest entry by start time including timezone offsets', async () => {
+        const first = { id: 1, start: '2026-11-14T10:00:00+02:00' };
+        const newest = { id: 2, start: '2026-11-14T08:30:00Z' };
+        const oldest = { id: 3, start: '2026-11-10T08:00:00Z' };
+        mockFetch.mockResolvedValue(mockResponse([first, newest, oldest]));
+
+        await expect(client.listTimeEntries({ limit: 1 })).resolves.toMatchObject({
+          time_entries: [newest],
+          returned: 1,
+          has_more: true,
+          total_received: 3,
+        });
+      });
+
+      it('should keep equal and unknown start times stable without changing the input', () => {
+        const missing = { id: 1 };
+        const older = { id: 2, start: '2026-11-10T09:00:00Z' };
+        const invalid = { id: 3, start: 'invalid' };
+        const newest = { id: 4, start: '2026-11-14T08:30:00Z' };
+        const sameStart = { id: 5, start: '2026-11-14T10:30:00+02:00' };
+        const nonString = { id: 6, start: 123 };
+        const upstream = [missing, older, invalid, newest, sameStart, nonString];
+        Object.freeze(upstream);
+
+        const sorted = timeEntriesEnvelope(upstream, 5);
+
+        expect(sorted.time_entries).toEqual([newest, sameStart, older, missing, invalid]);
       });
 
       it('should cap the limit', async () => {

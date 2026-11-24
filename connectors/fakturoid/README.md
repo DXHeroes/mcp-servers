@@ -49,6 +49,8 @@ require approval.
 
 ## Limits and troubleshooting
 
+Tool calls have a 20-second deadline. If a write times out, check the record before retrying.
+
 Fakturoid rate-limit headers determine the actual account window. Wait for reset on 429. A 403 can
 mean a locked document, missing bank account, subject limit or an already paid invoice rather than a
 bad credential. Dates must use the API's ISO 8601 formats. Empty successful write responses are

@@ -20,10 +20,15 @@ docker run --rm -p 127.0.0.1:8080:8080 \
 - `deep_research`: starts research for a detailed topic.
 - `deep_research_followup`: asks a follow-up using a prior interaction ID.
 
-No resources or prompts are exposed. Calls create billable provider work. Follow-up uses the Gemini
-2.5 Pro model with the prior interaction ID, so it is a linked, billable model follow-up rather than
-another Deep Research Agent run. Both tools carry read-only annotations because they return
-informational results; those protocol hints do not change provider billing.
+No resources or prompts are exposed. Research uses `deep-research-preview-04-2026`.
+Follow-up uses `gemini-3.8-flash` with the prior interaction ID. Both tools create billable
+provider work and carry read-only annotations for their informational results. The connector
+submits one request per follow-up and surfaces provider errors or incomplete results.
+Google estimates $1-3 for a typical research task. [Deep Research pricing](https://aistudio.google.com/docs/deep-research#estimated-costs)
+
+Stored interaction IDs remain tied to the issuing Gemini project and Google's retention period.
+The connector forwards the original ID for follow-ups and can read older research responses
+that still use the legacy output format.
 
 ## Limits and troubleshooting
 
