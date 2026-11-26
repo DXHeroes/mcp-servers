@@ -1,6 +1,6 @@
 {
   "name": "@dxheroes/mcp-abra-flexi",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "private": true,
   "description": "MCP server for Abra Flexi REST API \u2014 invoices, contacts, products, and accounting for Czech businesses",
   "type": "module",
@@ -20,7 +20,7 @@
   "mcpPackage": true,
   "scripts": {
     "build": "tsc --build",
-    "test": "vitest run",
+    "test": "pnpm build && vitest run",
     "test:watch": "vitest",
     "lint": "biome check src __tests__",
     "typecheck": "tsc --noEmit -p tsconfig.test.json",
@@ -51,6 +51,7 @@
   },
   "devDependencies": {
     "typescript": "5.9.3",
+    "@modelcontextprotocol/client": "2.4.0",
     "vitest": "4.1.11"
   },
   "bin": {

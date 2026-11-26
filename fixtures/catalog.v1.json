@@ -5,7 +5,7 @@
       "id": "abra-flexi",
       "name": "Abra Flexi",
       "description": "Invoices, contacts, products, and accounting via the Abra Flexi REST API.",
-      "version": "0.1.1",
+      "version": "0.2.0",
       "endpoint": {
         "transport": "streamable-http",
         "url": "https://abra-flexi.connectors.example.com/mcp"

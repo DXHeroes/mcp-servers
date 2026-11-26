@@ -39,6 +39,11 @@ export const GetIssuedInvoiceSchema = z.object({
 });
 
 export const CreateIssuedInvoiceSchema = z.object({
+  id: z
+    .string()
+    .regex(/^ext:[A-Za-z0-9_-]+:[A-Za-z0-9_-]+$/)
+    .optional()
+    .describe('Stable external ID for repeatable invoice imports (ext:system:key)'),
   typDokl: z.string().optional().describe('Document type code (e.g., "code:FAKTURA")'),
   firma: z
     .union([z.number().int().positive(), z.string().min(1)])
@@ -49,6 +54,8 @@ export const CreateIssuedInvoiceSchema = z.object({
   mena: z.string().optional().describe('Currency code (e.g., "code:CZK", "code:EUR")'),
   popis: z.string().optional().describe('Description / note'),
   poznam: z.string().optional().describe('Internal note'),
+  cisObj: z.string().optional().describe('Order number'),
+  varSym: z.string().optional().describe('Variable symbol'),
   polozkyFaktury: z
     .array(
       z.object({
@@ -70,6 +77,11 @@ export const ListReceivedInvoicesSchema = z.object({
 });
 
 export const CreateReceivedInvoiceSchema = z.object({
+  id: z
+    .string()
+    .regex(/^ext:[A-Za-z0-9_-]+:[A-Za-z0-9_-]+$/)
+    .optional()
+    .describe('Stable external ID for repeatable invoice imports (ext:system:key)'),
   typDokl: z.string().optional().describe('Document type code'),
   firma: z
     .union([z.number().int().positive(), z.string().min(1)])
@@ -79,7 +91,9 @@ export const CreateReceivedInvoiceSchema = z.object({
   datUcto: z.string().optional().describe('Accounting date (YYYY-MM-DD)'),
   mena: z.string().optional().describe('Currency code'),
   popis: z.string().optional().describe('Description'),
-  cisObj: z.string().optional().describe('Supplier invoice number'),
+  cisDosle: z.string().optional().describe('Supplier invoice number'),
+  cisObj: z.string().optional().describe('Order number'),
+  varSym: z.string().optional().describe('Variable symbol'),
   polozkyFaktury: z
     .array(
       z.object({
@@ -156,6 +170,8 @@ export const UpdateIssuedInvoiceSchema = z.object({
   mena: z.string().optional().describe('Currency code (e.g., "code:CZK", "code:EUR")'),
   popis: z.string().optional().describe('Description / note'),
   poznam: z.string().optional().describe('Internal note'),
+  cisObj: z.string().optional().describe('Order number'),
+  varSym: z.string().optional().describe('Variable symbol'),
   polozkyFaktury: z
     .array(
       z.object({
@@ -192,7 +208,9 @@ export const UpdateReceivedInvoiceSchema = z.object({
   datUcto: z.string().optional().describe('Accounting date (YYYY-MM-DD)'),
   mena: z.string().optional().describe('Currency code'),
   popis: z.string().optional().describe('Description'),
-  cisObj: z.string().optional().describe('Supplier invoice number'),
+  cisDosle: z.string().optional().describe('Supplier invoice number'),
+  cisObj: z.string().optional().describe('Order number'),
+  varSym: z.string().optional().describe('Variable symbol'),
   polozkyFaktury: z
     .array(
       z.object({
