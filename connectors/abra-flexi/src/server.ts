@@ -9,6 +9,8 @@ import type { ApiKeyConfig, McpResource, McpTool, ToolCallContext } from '@dxher
 import { McpServer, withToolCallDeadline } from '@dxheroes/mcp-kit';
 import { z } from 'zod';
 import { FlexiApiError, FlexiClient } from './client.js';
+import { buildInvoiceCreator } from './invoice-creator.js';
+import { buildInvoiceReader } from './invoice-reader.js';
 import type { ToolDef } from './tool-annotations.js';
 import { buildFlexiToolDefs } from './tool-definitions.js';
 
@@ -16,6 +18,10 @@ export class FlexiMcpServer extends McpServer {
   private client: FlexiClient | null = null;
   private initError: string | null = null;
   private toolDefs: ToolDef[] = [];
+
+  private readonly readerCompany = process.env.FLEXI_INVOICE_READER_COMPANY_URL;
+  private readonly creatorCompany = process.env.FLEXI_INVOICE_CREATOR_COMPANY_URL;
+  private readonly invoiceCompany = this.readerCompany ?? this.creatorCompany;
 
   constructor(private apiKeyConfig: ApiKeyConfig | null) {
     super();
@@ -30,7 +36,7 @@ export class FlexiMcpServer extends McpServer {
     }
 
     try {
-      this.client = new FlexiClient(this.apiKeyConfig.apiKey);
+      this.client = new FlexiClient(this.apiKeyConfig.apiKey, this.invoiceCompany);
       this.initError = null;
       this.toolDefs = this.buildToolDefs();
     } catch (error) {
@@ -45,7 +51,7 @@ export class FlexiMcpServer extends McpServer {
     }
 
     try {
-      const client = new FlexiClient(this.apiKeyConfig.apiKey);
+      const client = new FlexiClient(this.apiKeyConfig.apiKey, this.invoiceCompany);
       return await client.validateApiKey();
     } catch (error) {
       const msg = error instanceof Error ? error.message : 'Unknown error';
@@ -197,11 +203,17 @@ export class FlexiMcpServer extends McpServer {
       return this.errorResponse(error.code, error.message, error.hint);
     }
     const msg = error instanceof Error ? error.message : 'Unknown error';
-    return this.errorResponse('API_ERROR', msg);
+    return this.errorResponse(
+      'API_ERROR',
+      this.invoiceCompany ? 'Could not read a valid invoice response from Flexi.' : msg,
+    );
   }
 
   private buildToolDefs(): ToolDef[] {
     if (!this.client) return [];
+    if (this.readerCompany !== undefined) return buildInvoiceReader(this.client);
+    if (this.creatorCompany !== undefined)
+      return [...buildInvoiceReader(this.client), ...buildInvoiceCreator(this.client)];
     return buildFlexiToolDefs(this.client);
   }
 }

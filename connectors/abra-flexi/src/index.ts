@@ -13,7 +13,7 @@ export const mcpPackage: McpPackage = {
     id: 'abra-flexi',
     name: 'Abra Flexi',
     description: 'Invoices, contacts, products, and accounting via the Abra Flexi REST API.',
-    version: '0.1.1',
+    version: '0.2.0',
     author: 'DX Heroes',
     license: 'MIT',
     requiresApiKey: true,

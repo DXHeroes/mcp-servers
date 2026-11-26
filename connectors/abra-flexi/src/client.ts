@@ -29,6 +29,7 @@ export type FlexiErrorCode =
   | 'NOT_FOUND'
   | 'RATE_LIMITED'
   | 'BAD_REQUEST'
+  | 'UNCONFIRMED_WRITE'
   | 'UNPROCESSABLE'
   | 'API_ERROR';
 
@@ -105,7 +106,10 @@ export class FlexiClient {
   private readonly authHeader: string;
   private readonly baseUrl: string;
 
-  constructor(apiKey: string) {
+  constructor(
+    apiKey: string,
+    private readonly invoiceCompany?: string,
+  ) {
     const separatorIndex = apiKey.indexOf('|');
     if (separatorIndex === -1) {
       throw new Error(
@@ -124,6 +128,15 @@ export class FlexiClient {
       );
     }
 
+    if (invoiceCompany !== undefined) {
+      if (
+        this.baseUrl !== invoiceCompany ||
+        (!/^https:\/\/[a-zA-Z0-9.-]+(:[0-9]+)?\/c\/[a-zA-Z0-9_-]+$/.test(invoiceCompany) &&
+          !/^http:\/\/127\.0\.0\.1:[0-9]+\/c\/[a-zA-Z0-9_-]+$/.test(invoiceCompany))
+      ) {
+        throw new Error('Invoice reader requires a matching, company-scoped URL');
+      }
+    }
     const encoded = Buffer.from(credentials).toString('base64');
     this.authHeader = `Basic ${encoded}`;
   }
@@ -201,13 +214,26 @@ export class FlexiClient {
       init.body = JSON.stringify({ winstrom: { [evidence]: body } });
     }
 
-    const response = await safeFetch(url, { ...init, allowPrivate: allowPrivateTargets() });
+    const response = await safeFetch(url, {
+      ...init,
+      maxRedirects: this.invoiceCompany ? 0 : undefined,
+      allowPrivate: allowPrivateTargets(),
+    });
 
     if (method === 'DELETE' && response.ok) {
       return undefined as T;
     }
 
     if (!response.ok) {
+      if (this.invoiceCompany) {
+        const code = this.mapStatusToCode(response.status);
+        throw new FlexiApiError(
+          `Flexi invoice request returned HTTP ${response.status}`,
+          response.status,
+          code,
+          hintForCode(code),
+        );
+      }
       throw await this.errorFromResponse(response);
     }
 
@@ -257,6 +283,10 @@ export class FlexiClient {
    */
   async validateApiKey(): Promise<{ valid: boolean; error?: string }> {
     try {
+      if (this.invoiceCompany) {
+        await this.readInvoiceRows('faktura-vydana', undefined, { limit: 1, detail: 'custom:id' });
+        return { valid: true };
+      }
       // Fetch company info to validate credentials
       const url = `${this.baseUrl}.json`;
       const response = await safeFetch(url, {
@@ -285,7 +315,11 @@ export class FlexiClient {
       }
       return { valid: true };
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
+      const message = this.invoiceCompany
+        ? 'Could not validate invoice read access.'
+        : error instanceof Error
+          ? error.message
+          : String(error);
       return { valid: false, error: `Validation failed: ${message}` };
     }
   }
@@ -349,6 +383,14 @@ export class FlexiClient {
   }
 
   // ── Issued Invoices (faktura-vydana) ─────────────────────────────────
+
+  async readInvoiceRows(
+    evidence: 'faktura-vydana' | 'faktura-prijata',
+    selector: string | undefined,
+    params: Record<string, string | number | undefined>,
+  ): Promise<unknown> {
+    return this.request('GET', evidence, selector, params);
+  }
 
   async listIssuedInvoices(params?: {
     limit?: number;
