@@ -5,7 +5,7 @@ import { Client } from '@modelcontextprotocol/client';
 import { StdioClientTransport } from '@modelcontextprotocol/client/stdio';
 import { expect, it } from 'vitest';
 
-async function connect(company: string, reader?: string) {
+async function connect(company: string, reader?: string, creator?: string) {
   const client = new Client({ name: 'invoice-acceptance', version: '1' });
   await client.connect(
     new StdioClientTransport({
@@ -13,6 +13,7 @@ async function connect(company: string, reader?: string) {
       args: [fileURLToPath(new URL('../dist/cli.js', import.meta.url)), '--stdio'],
       env: {
         MCP_UPSTREAM_CREDENTIAL: `${company}|fixture:synthetic`,
+        ...(creator === undefined ? {} : { FLEXI_INVOICE_CREATOR_COMPANY_URL: creator }),
         ...(reader === undefined ? {} : { FLEXI_INVOICE_READER_COMPANY_URL: reader }),
       },
       stderr: 'pipe',
@@ -53,6 +54,23 @@ it('reads projected invoices over stdio and round-trips independent document num
       const fields = JSON.parse(body).winstrom[evidence!];
       const key = selector ?? fields.id;
       const previous = rows.get(key);
+      if (fields['@update'] === 'fail') {
+        if (previous || fields.datVyst === '2000-01-01') {
+          res.writeHead(400).end('PRIVATE');
+          return;
+        }
+        if (fields.popis === 'unknown outcome') {
+          res.end();
+          return;
+        }
+        rows.set(key, { ...fields, id: rows.size + 1 });
+        res.end(
+          JSON.stringify({
+            winstrom: { success: 'true', stats: { created: '1', updated: '0', deleted: '0' } },
+          }),
+        );
+        return;
+      }
       rows.set(key, { ...previous, ...fields, id: previous?.id ?? rows.size + 1 });
       res.end(JSON.stringify({ winstrom: { success: true } }));
       return;
@@ -114,6 +132,19 @@ it('reads projected invoices over stdio and round-trips independent document num
       'flexi_list_issued_invoices',
       'flexi_list_received_invoices',
     ]);
+    const creator = await connect(company, undefined, company);
+    clients.push(creator);
+    expect((await creator.listTools()).tools.map((t) => t.name).sort()).toEqual([
+      'flexi_create_issued_invoice',
+      'flexi_create_received_invoice',
+      'flexi_get_issued_invoice',
+      'flexi_get_received_invoice',
+      'flexi_list_issued_invoices',
+      'flexi_list_received_invoices',
+    ]);
+    const both = await connect(company, company, company);
+    clients.push(both);
+    expect((await both.listTools()).tools).toHaveLength(4);
     for (const kind of ['issued', 'received']) {
       const evidence = kind === 'issued' ? 'faktura-vydana' : 'faktura-prijata';
       const rows = new Map<string, Record<string, unknown>>();
@@ -128,6 +159,46 @@ it('reads projected invoices over stdio and round-trips independent document num
       const create = `flexi_create_${kind}_invoice`;
       const get = `flexi_get_${kind}_invoice`;
       const list = `flexi_list_${kind}_invoices`;
+      const restricted = {
+        ...input,
+        id: 'ext:fixture:scoped',
+        typDokl: 'code:TEST',
+        polozkyFaktury: [{ nazev: 'Sample', cenaMj: 1 }],
+      };
+      expect((await call(creator, create, restricted)).data).toEqual({
+        created: true,
+        externalId: restricted.id,
+      });
+      expect(
+        (
+          await call(creator, create, {
+            ...restricted,
+            polozkyFaktury: [{ nazev: 'Sample', cenaMj: 2 }],
+          })
+        ).error,
+      ).toBe(true);
+      expect(rows.get(restricted.id)?.polozkyFaktury).toEqual(restricted.polozkyFaktury);
+      expect(
+        (
+          await call(creator, create, {
+            ...restricted,
+            id: 'ext:fixture:locked',
+            datVyst: '2000-01-01',
+          })
+        ).data.error,
+      ).toBe('BAD_REQUEST');
+      expect(
+        (
+          await call(creator, create, {
+            ...restricted,
+            id: 'ext:fixture:unknown',
+            popis: 'unknown outcome',
+          })
+        ).data.error,
+      ).toBe('UNCONFIRMED_WRITE');
+      expect((await call(creator, create, { ...restricted, '@update': 'ok' })).error).toBe(true);
+      expect(rows.size).toBe(1);
+      rows.clear();
       for (let repeat = 0; repeat < 2; repeat++)
         expect((await call(writer, create, input)).error).toBe(false);
       expect(rows.size).toBe(1);

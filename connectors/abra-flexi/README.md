@@ -82,3 +82,15 @@ can touch data beyond the named convenience tools, so restrict them when users d
 scope. A 401 means rejected username/password; 402 usually means REST writes are not licensed; 403
 can be permissions or license capacity. Verify the company path, rights and active sessions before
 rotating a valid credential.
+
+## Invoice creation profile
+
+Set `FLEXI_INVOICE_CREATOR_COMPANY_URL` to the exact company URL to expose the
+four invoice reads and two create tools. When both profile variables are set,
+the reader takes precedence. Creation requires a document type and a stable
+external ID. Keep that ID across retries. Flexi receives the per-document
+`@update: fail` import mode and rejects attempts to overwrite existing invoices.
+The connector checks the import statistics before confirming creation. Use a
+company-scoped API account with invoice creation rights and without lock-management
+rights. Validate the accounting period and document lock rules in a write-approved
+test company before enabling this profile.

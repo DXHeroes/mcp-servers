@@ -9,6 +9,7 @@ import type { ApiKeyConfig, McpResource, McpTool, ToolCallContext } from '@dxher
 import { McpServer, withToolCallDeadline } from '@dxheroes/mcp-kit';
 import { z } from 'zod';
 import { FlexiApiError, FlexiClient } from './client.js';
+import { buildInvoiceCreator } from './invoice-creator.js';
 import { buildInvoiceReader } from './invoice-reader.js';
 import type { ToolDef } from './tool-annotations.js';
 import { buildFlexiToolDefs } from './tool-definitions.js';
@@ -18,7 +19,9 @@ export class FlexiMcpServer extends McpServer {
   private initError: string | null = null;
   private toolDefs: ToolDef[] = [];
 
-  private readonly invoiceCompany = process.env.FLEXI_INVOICE_READER_COMPANY_URL;
+  private readonly readerCompany = process.env.FLEXI_INVOICE_READER_COMPANY_URL;
+  private readonly creatorCompany = process.env.FLEXI_INVOICE_CREATOR_COMPANY_URL;
+  private readonly invoiceCompany = this.readerCompany ?? this.creatorCompany;
 
   constructor(private apiKeyConfig: ApiKeyConfig | null) {
     super();
@@ -208,7 +211,9 @@ export class FlexiMcpServer extends McpServer {
 
   private buildToolDefs(): ToolDef[] {
     if (!this.client) return [];
-    if (this.invoiceCompany !== undefined) return buildInvoiceReader(this.client);
+    if (this.readerCompany !== undefined) return buildInvoiceReader(this.client);
+    if (this.creatorCompany !== undefined)
+      return [...buildInvoiceReader(this.client), ...buildInvoiceCreator(this.client)];
     return buildFlexiToolDefs(this.client);
   }
 }

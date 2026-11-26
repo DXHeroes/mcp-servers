@@ -29,6 +29,7 @@ export type FlexiErrorCode =
   | 'NOT_FOUND'
   | 'RATE_LIMITED'
   | 'BAD_REQUEST'
+  | 'UNCONFIRMED_WRITE'
   | 'UNPROCESSABLE'
   | 'API_ERROR';
 
