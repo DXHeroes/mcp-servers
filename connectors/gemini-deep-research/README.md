@@ -17,18 +17,20 @@ docker run --rm -p 127.0.0.1:8080:8080 \
 
 ## MCP surface
 
-- `deep_research`: starts research for a detailed topic.
-- `deep_research_followup`: asks a follow-up using a prior interaction ID.
+- `deep_research` starts a stored background interaction and polls for a cited report. It returns the interaction ID alongside the report.
+- `deep_research_followup` accepts that ID and a question. It retrieves the completed agent report and sends its text and the question to the model in separate content parts. For further questions, pass the ID from the latest follow-up to continue that model conversation.
 
-No resources or prompts are exposed. Research uses `deep-research-preview-04-2026`.
-Follow-up uses `gemini-3.8-flash` with the prior interaction ID. Both tools create billable
-provider work and carry read-only annotations for their informational results. The connector
-submits one request per follow-up and surfaces provider errors or incomplete results.
-Google estimates $1-3 for a typical research task. [Deep Research pricing](https://aistudio.google.com/docs/deep-research#estimated-costs)
+On 2026-11-28, `deep-research-preview-04-2026` returned a cited report. Google returned 404 for
+`deep-research-latest`. Follow-ups use `gemini-flash-latest`, which answered a question using the
+retrieved report. Google rejects a model request that passes an agent ID as `previous_interaction_id`.
 
-Stored interaction IDs remain tied to the issuing Gemini project and Google's retention period.
-The connector forwards the original ID for follow-ups and can read older research responses
-that still use the legacy output format.
+Each follow-up makes one read and at most one billable model request. A provider error or a
+response requiring continuation ends the call. Google estimates $1–3 for a typical background
+research task. [Deep Research pricing](https://aistudio.google.com/docs/deep-research#estimated-costs)
+
+Stored IDs are scoped to the issuing Gemini project and Google's retention period. The connector
+can also read stored research reports in the legacy output format. Both tools carry read-only
+annotations. The connector exposes no resources or prompts.
 
 ## Limits and troubleshooting
 

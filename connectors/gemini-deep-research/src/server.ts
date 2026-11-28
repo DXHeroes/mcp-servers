@@ -73,7 +73,7 @@ const FollowUpInputSchema = z.object({
   interactionId: z
     .string()
     .min(1, 'Interaction ID is required')
-    .describe('The interaction ID from a previous deep_research call'),
+    .describe('The interaction ID from a previous deep_research or deep_research_followup call'),
   question: z
     .string()
     .min(1, 'Question is required')
@@ -159,8 +159,8 @@ export class GeminiDeepResearchMcpServer extends McpServer {
       {
         name: 'deep_research_followup',
         description:
-          'Ask a follow-up question about a completed research. ' +
-          'Use the interactionId returned from a previous deep_research call. ' +
+          'Ask a follow-up question about a completed research report. ' +
+          'Use the interactionId returned from a previous deep_research or deep_research_followup call. ' +
           'Useful for clarification, summarization, or elaboration on specific sections.',
         inputSchema: FollowUpInputSchema,
         annotations: READ_ONLY_TOOL,

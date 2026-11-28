@@ -340,6 +340,24 @@ describe('GeminiClient', () => {
   });
 
   describe('followUp', () => {
+    beforeEach(() => {
+      mocks.interactions.get.mockResolvedValue({
+        model: 'gemini-flash-latest',
+        status: 'completed',
+      });
+    });
+
+    it('honours cancellation after reading a report and before creating a model interaction', async () => {
+      const controller = new AbortController();
+      mocks.interactions.get.mockImplementationOnce(async () => {
+        controller.abort(new Error('cancelled after retrieval'));
+        return { agent: 'agent', status: 'completed', outputs: [{ type: 'text', text: 'Report' }] };
+      });
+      await expect(
+        client.followUp('previous', 'Explain.', { signal: controller.signal }),
+      ).rejects.toThrow('cancelled after retrieval');
+      expect(mocks.interactions.create).not.toHaveBeenCalled();
+    });
     it('should use model parameter instead of agent', async () => {
       mocks.interactions.create.mockResolvedValue({
         id: 'followup-1',
@@ -347,16 +365,22 @@ describe('GeminiClient', () => {
         outputs: [{ type: 'text', text: 'Follow-up answer' }],
       });
 
-      await client.followUp('prev-interaction-id', 'What about X?');
+      const context = { signal: new AbortController().signal };
+      await client.followUp('prev-interaction-id', 'What about X?', context);
+      expect(mocks.interactions.get).toHaveBeenCalledWith(
+        'prev-interaction-id',
+        undefined,
+        expect.objectContaining({ signal: context.signal }),
+      );
 
       expect(mocks.interactions.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          model: 'gemini-3.8-flash',
+          model: 'gemini-flash-latest',
           previous_interaction_id: 'prev-interaction-id',
           input: 'What about X?',
           automatic_continuation: false,
         }),
-        expect.objectContaining({ maxRetries: 0 }),
+        expect.objectContaining({ maxRetries: 0, signal: context.signal }),
       );
 
       // Should NOT have agent parameter
