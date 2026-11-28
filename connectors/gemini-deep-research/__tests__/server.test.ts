@@ -423,6 +423,7 @@ describe('GeminiDeepResearchMcpServer', () => {
         error: string;
         message: string;
         hint?: string;
+        status?: number;
       };
     }
 
@@ -445,7 +446,8 @@ describe('GeminiDeepResearchMcpServer', () => {
     it('should keep the code out of the message', async () => {
       const body = await errorFor(new Error('429 Too Many Requests'));
       expect(body.error).toBe('RATE_LIMITED');
-      expect(body.message).toBe('429 Too Many Requests');
+      expect(body.message).toBe('Gemini quota or rate limit reached.');
+      expect(body.status).toBe(429);
       expect(body.message).not.toContain('RATE_LIMITED');
     });
 

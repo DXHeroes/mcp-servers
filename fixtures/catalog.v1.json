@@ -80,7 +80,7 @@
       "id": "gemini-deep-research",
       "name": "Gemini Deep Research",
       "description": "Conducts comprehensive AI-powered research using Google's Deep Research Agent. Autonomously searches the web, reads multiple sources, and synthesizes findings into detailed, cited reports. Tasks take 5-20 minutes. Google estimates $1-3 for a typical task.",
-      "version": "0.1.2",
+      "version": "0.1.3",
       "endpoint": {
         "transport": "streamable-http",
         "url": "https://gemini.connectors.example.com/mcp"

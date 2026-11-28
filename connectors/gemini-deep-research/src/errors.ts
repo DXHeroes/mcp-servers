@@ -30,9 +30,7 @@ export type GeminiErrorCode =
 /**
  * A classified Gemini failure.
  *
- * `message` is the bare upstream text. The code is NOT prefixed onto it — the
- * server serialises it as its own JSON field, and prefixing produced errors
- * that read `RATE_LIMITED: "RATE_LIMITED: ..."`.
+ * Messages are safe for callers. SDK diagnostics are inspected only for classification.
  */
 export class GeminiApiError extends Error {
   constructor(
@@ -47,6 +45,17 @@ export class GeminiApiError extends Error {
     this.name = 'GeminiApiError';
   }
 }
+
+const PUBLIC_MESSAGES: Record<GeminiErrorCode, string> = {
+  INVALID_API_KEY: 'Gemini rejected the API key.',
+  FORBIDDEN: 'Gemini denied access to the requested resource.',
+  NOT_FOUND: 'Gemini could not find the requested resource.',
+  RATE_LIMITED: 'Gemini quota or rate limit reached.',
+  BAD_REQUEST: 'Gemini rejected the request.',
+  TIMEOUT: 'The Gemini request timed out.',
+  SERVICE_UNAVAILABLE: 'The Gemini service is unavailable.',
+  API_ERROR: 'Could not complete the Gemini request.',
+};
 
 const HINTS: Record<GeminiErrorCode, string | undefined> = {
   INVALID_API_KEY:
@@ -168,7 +177,7 @@ export function classifyGeminiError(error: unknown): GeminiApiError {
   }
 
   const resolved = code ?? 'API_ERROR';
-  return new GeminiApiError(message, resolved, status, HINTS[resolved]);
+  return new GeminiApiError(PUBLIC_MESSAGES[resolved], resolved, status, HINTS[resolved]);
 }
 
 /**

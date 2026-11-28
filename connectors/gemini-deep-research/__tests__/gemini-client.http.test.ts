@@ -2,6 +2,8 @@ import { afterEach, expect, it, vi } from 'vitest';
 import { classifyGeminiError } from '../src/errors.js';
 import { GeminiClient } from '../src/gemini-client.js';
 
+import { GeminiDeepResearchMcpServer } from '../src/server.js';
+
 function mockGemini(...responses: Array<Response | ((request: Request) => Promise<Response>)>) {
   const requests: Request[] = [];
   vi.stubGlobal('fetch', async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -302,4 +304,60 @@ it('preserves the timeout and cancels upstream when the deadline aborts an activ
   expect(requests[1]?.signal.aborted).toBe(true);
   expect(requests[2]?.signal.aborted).toBe(false);
   expect(requests[2]?.headers.get('api-revision')).toBe('2026-05-20');
+});
+
+const marker = 'synthetic-private-provider-detail';
+const rejection = () =>
+  Response.json(
+    { error: { code: 400, status: 'INVALID_ARGUMENT', message: marker } },
+    { status: 400 },
+  );
+const started = () => Response.json({ id: 'research-id', status: 'in_progress', steps: [] });
+
+it.each([
+  'validation',
+  'research create',
+  'background poll',
+  'background failure',
+  'follow-up read',
+  'follow-up create',
+])('keeps provider details out of %s responses and logs', async (operation) => {
+  const logs = [
+    vi.spyOn(console, 'log').mockImplementation(() => {}),
+    vi.spyOn(console, 'warn').mockImplementation(() => {}),
+    vi.spyOn(console, 'error').mockImplementation(() => {}),
+  ];
+  try {
+    const responses = [];
+    if (operation.startsWith('background')) responses.push(started());
+    if (operation === 'follow-up create') responses.push(storedModel());
+    responses.push(
+      operation === 'background failure'
+        ? Response.json({ id: 'research-id', status: 'failed', error: { message: marker } })
+        : rejection(),
+    );
+    mockGemini(...responses);
+    const server = new GeminiDeepResearchMcpServer({
+      apiKey: 'test',
+      headerName: 'x-goog-api-key',
+      headerValue: 'test',
+    });
+    await server.initialize();
+    const result =
+      operation === 'validation'
+        ? await server.validate()
+        : operation.startsWith('follow-up')
+          ? await server.callTool('deep_research_followup', {
+              interactionId: 'research-id',
+              question: 'Explain.',
+            })
+          : await server.callTool('deep_research', { topic: 'Test' });
+    if (operation === 'validation') expect(result).toMatchObject({ valid: false });
+    else expect(result).toMatchObject({ isError: true });
+    if (operation === 'background failure') expect(JSON.stringify(result)).toContain('research-id');
+    expect.soft(JSON.stringify(result)).not.toContain(marker);
+    expect(JSON.stringify(logs.map((log) => log.mock.calls))).not.toContain(marker);
+  } finally {
+    vi.restoreAllMocks();
+  }
 });

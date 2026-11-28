@@ -70,7 +70,10 @@ describe('GeminiClient', () => {
       mocks.models.list.mockRejectedValue(new Error('ECONNREFUSED'));
 
       const result = await client.validateApiKey();
-      expect(result).toEqual({ valid: false, error: 'Validation failed: ECONNREFUSED' });
+      expect(result).toEqual({
+        valid: false,
+        error: 'Validation failed: Could not complete the Gemini request.',
+      });
     });
 
     it('should reject a key the API rejects with a 400, not only a 401', async () => {
