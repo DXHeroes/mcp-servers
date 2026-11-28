@@ -15,7 +15,7 @@ import type {
 import { McpServer } from '@dxheroes/mcp-kit';
 import { z } from 'zod';
 import { classifyGeminiError } from './errors.js';
-import { GeminiClient } from './gemini-client.js';
+import { type DeepResearchResult, GeminiClient } from './gemini-client.js';
 
 /**
  * Both tools ask questions and return prose. Neither writes anywhere the
@@ -224,19 +224,7 @@ export class GeminiDeepResearchMcpServer extends McpServer {
         });
       }
 
-      return {
-        content: [
-          {
-            type: 'text',
-            text: this.researchText(result.content, result.interactionId),
-          },
-        ],
-        metadata: {
-          interactionId: result.interactionId,
-          citations: result.citations,
-          status: result.status,
-        },
-      };
+      return this.completedResearch(result);
     } catch (error) {
       return this.handleApiError(error);
     }
@@ -268,21 +256,26 @@ export class GeminiDeepResearchMcpServer extends McpServer {
         ...(context ? [context] : []),
       );
 
-      return {
-        content: [
-          {
-            type: 'text',
-            text: this.researchText(result.content, result.interactionId),
-          },
-        ],
-        metadata: {
-          interactionId: result.interactionId,
-          status: result.status,
-        },
-      };
+      return this.completedResearch(result);
     } catch (error) {
       return this.handleApiError(error);
     }
+  }
+
+  private completedResearch(result: DeepResearchResult) {
+    const metadata = {
+      interactionId: result.interactionId,
+      status: result.status,
+      ...(result.citations ? { citations: result.citations } : {}),
+    };
+    return {
+      content: [
+        { type: 'text', text: this.researchText(result.content, result.interactionId) },
+        { type: 'text', text: JSON.stringify(metadata) },
+      ],
+      structuredContent: metadata,
+      metadata,
+    };
   }
 
   /**

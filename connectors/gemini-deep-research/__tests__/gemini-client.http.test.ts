@@ -336,7 +336,7 @@ it.each([
         ? Response.json({ id: 'research-id', status: 'failed', error: { message: marker } })
         : rejection(),
     );
-    mockGemini(...responses);
+    const requests = mockGemini(...responses);
     const server = new GeminiDeepResearchMcpServer({
       apiKey: 'test',
       headerName: 'x-goog-api-key',
@@ -352,6 +352,19 @@ it.each([
               question: 'Explain.',
             })
           : await server.callTool('deep_research', { topic: 'Test' });
+    const create = 'POST /v1beta/interactions';
+    const read = 'GET /v1beta/interactions/research-id';
+    const expectedRequests: Record<string, string[]> = {
+      validation: ['GET /v1beta/models'],
+      'research create': [create],
+      'background poll': [create, read],
+      'background failure': [create, read],
+      'follow-up read': [read],
+      'follow-up create': [read, create],
+    };
+    expect(requests.map((req) => `${req.method} ${new URL(req.url).pathname}`)).toEqual(
+      expectedRequests[operation],
+    );
     if (operation === 'validation') expect(result).toMatchObject({ valid: false });
     else expect(result).toMatchObject({ isError: true });
     if (operation === 'background failure') expect(JSON.stringify(result)).toContain('research-id');

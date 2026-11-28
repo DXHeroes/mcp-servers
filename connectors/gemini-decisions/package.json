@@ -1,6 +1,6 @@
 {
   "name": "@dxheroes/mcp-gemini-decisions",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "Evaluate named yes/no, choice and score questions with Google Gemini Decisions.",
   "type": "module",

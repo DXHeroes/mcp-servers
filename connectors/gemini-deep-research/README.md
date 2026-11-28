@@ -17,7 +17,7 @@ docker run --rm -p 127.0.0.1:8080:8080 \
 
 ## MCP surface
 
-- `deep_research` starts a stored background interaction and polls for a cited report. It returns the interaction ID alongside the report.
+- `deep_research` starts a stored background interaction and polls for a cited report. The first text block contains the report. Both tools return the interaction ID and status in `structuredContent` and as JSON in a second text block. Research also includes citations there.
 - `deep_research_followup` accepts that ID and a question. It retrieves the completed agent report and sends its text and the question to the model in separate content parts. For further questions, pass the ID from the latest follow-up to continue that model conversation.
 
 On 2026-11-28, `deep-research-preview-04-2026` returned a cited report. Google returned 404 for

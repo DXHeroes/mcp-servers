@@ -149,7 +149,12 @@ it('Gemini stdio research keeps provider progress diagnostics off the JSON-RPC s
       arguments: { topic: 'Synthetic topic' },
     });
     expect(result.isError).not.toBe(true);
-    expect(result.content).toEqual([{ type: 'text', text: 'Synthetic stdio research' }]);
+    const metadata = { interactionId: 'synthetic-interaction', status: 'completed', citations: [] };
+    expect(result.structuredContent).toEqual(metadata);
+    expect(result.content).toEqual([
+      { type: 'text', text: 'Synthetic stdio research' },
+      { type: 'text', text: JSON.stringify(metadata) },
+    ]);
     expect(diagnostics).toContain('Research started');
     expect(diagnostics).not.toContain('synthetic-research-credential');
   } finally {
