@@ -12,6 +12,7 @@ only that component's image:
 - `ghcr.io/dxheroes/mcp-abra-flexi`
 - `ghcr.io/dxheroes/mcp-byzdata`
 - `ghcr.io/dxheroes/mcp-fakturoid`
+- `ghcr.io/dxheroes/mcp-gemini-decisions`
 - `ghcr.io/dxheroes/mcp-gemini-deep-research`
 - `ghcr.io/dxheroes/mcp-merk`
 - `ghcr.io/dxheroes/mcp-postgres`

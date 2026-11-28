@@ -29,6 +29,7 @@ An ordinary REST API is not MCP; import its OpenAPI description in Local MCP Gat
 | Abra Flexi | `ghcr.io/dxheroes/mcp-abra-flexi` | Czech ERP and accounting |
 | ByzData | `ghcr.io/dxheroes/mcp-byzdata` | Czech public company data |
 | Fakturoid | `ghcr.io/dxheroes/mcp-fakturoid` | Invoicing and expenses |
+| Gemini Decisions | `ghcr.io/dxheroes/mcp-gemini-decisions` | Evaluate yes/no, choice and score questions over shared text and media |
 | Gemini Deep Research | `ghcr.io/dxheroes/mcp-gemini-deep-research` | Long-running cited research |
 | Merk | `ghcr.io/dxheroes/mcp-merk` | Czech and Slovak company intelligence |
 | PostgreSQL | `ghcr.io/dxheroes/mcp-postgres` | Bounded read and explicit write SQL tools |

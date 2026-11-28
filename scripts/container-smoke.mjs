@@ -14,6 +14,7 @@ const counts = {
   'abra-flexi': 30,
   byzdata: 9,
   fakturoid: 45,
+  'gemini-decisions': 1,
   'gemini-deep-research': 2,
   merk: 23,
   postgres: 2,

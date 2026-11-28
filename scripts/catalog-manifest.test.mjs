@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
@@ -66,5 +66,28 @@ test('generates OAuth service offers without a package-level API-key alias', asy
     }
   } finally {
     await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test('the example deployment advertises both Gemini connectors with Gateway credential delivery', async () => {
+  const { stdout } = await exec(process.execPath, [
+    'scripts/catalog-manifest.mjs',
+    'fixtures/deployment-endpoints.example.json',
+  ]);
+  const generated = JSON.parse(stdout).servers;
+  const frozen = JSON.parse(
+    await readFile(new URL('../fixtures/catalog.v1.json', import.meta.url), 'utf8'),
+  ).servers;
+  for (const id of ['gemini-decisions', 'gemini-deep-research']) {
+    const offer = generated.find((server) => server.id === id);
+    assert.ok(offer, `Missing catalog offer for ${id}`);
+    assert.equal(offer.auth.type, 'api_key');
+    assert.equal(offer.auth.defaultCredentialMode, 'shared');
+    assert.deepEqual(offer.auth.credentialModes, ['shared', 'per_user']);
+    assert.equal(offer.auth.credentialDelivery, 'connector_base64url');
+    assert.deepEqual(
+      offer,
+      frozen.find((server) => server.id === id),
+    );
   }
 });

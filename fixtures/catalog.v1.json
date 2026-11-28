@@ -58,10 +58,29 @@
       "author": "DX Heroes"
     },
     {
+      "id": "gemini-decisions",
+      "name": "Gemini Decisions",
+      "description": "Evaluate named yes/no, choice and score questions over shared text and media.",
+      "version": "0.1.0",
+      "endpoint": {
+        "transport": "streamable-http",
+        "url": "https://gemini-decisions.connectors.example.com/mcp"
+      },
+      "auth": {
+        "type": "api_key",
+        "credentialModes": ["shared", "per_user"],
+        "defaultCredentialMode": "shared",
+        "credentialDelivery": "connector_base64url",
+        "apiKeyHint": "Gemini Developer API key from Google AI Studio."
+      },
+      "docsUrl": "https://aistudio.google.com/docs/decisions-api",
+      "author": "DX Heroes"
+    },
+    {
       "id": "gemini-deep-research",
       "name": "Gemini Deep Research",
-      "description": "Conducts comprehensive AI-powered research using Google's Deep Research Agent. Autonomously searches the web, reads multiple sources, and synthesizes findings into detailed, cited reports. Tasks take 5-20 minutes. Cost: ~$2-5 per research.",
-      "version": "0.1.1",
+      "description": "Conducts comprehensive AI-powered research using Google's Deep Research Agent. Autonomously searches the web, reads multiple sources, and synthesizes findings into detailed, cited reports. Tasks take 5-20 minutes. Google estimates $1-3 for a typical task.",
+      "version": "0.1.2",
       "endpoint": {
         "transport": "streamable-http",
         "url": "https://gemini.connectors.example.com/mcp"

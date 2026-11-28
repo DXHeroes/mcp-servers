@@ -9,6 +9,7 @@ const connectors = [
   ['abra-flexi', 30, 'https://203.0.113.10/c/fixture|fixture:synthetic'],
   ['byzdata', 9, undefined],
   ['fakturoid', 45, 'fixture:client:synthetic'],
+  ['gemini-decisions', 1, 'synthetic-fixture'],
   ['gemini-deep-research', 2, 'synthetic-fixture'],
   ['merk', 23, 'synthetic-fixture'],
   ['postgres', 2, 'postgresql://fixture:synthetic@127.0.0.1/fixture?sslmode=disable'],

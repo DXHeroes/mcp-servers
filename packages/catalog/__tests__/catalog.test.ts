@@ -15,7 +15,7 @@ afterEach(async () => {
   cleanups.length = 0;
 });
 it('validates frozen fixture, duplicates, URLs, credentials and schema refinements', () => {
-  expect(parseManifest(fixture).servers).toHaveLength(7);
+  expect(parseManifest(fixture).servers).toHaveLength(8);
   const data = JSON.parse(fixture);
   data.servers.push(data.servers[0]);
   expect(() => parseManifest(JSON.stringify(data))).toThrow();
@@ -70,7 +70,7 @@ it('serves only valid snapshots and fails discovery/readiness during invalid upd
   const get = () =>
     fetch(`${base}/catalog/v1/servers`, { headers: { Authorization: 'Bearer catalog-test-only' } });
   expect((await fetch(`${base}/catalog/v1/servers`)).status).toBe(401);
-  expect((await (await get()).json()).servers).toHaveLength(7);
+  expect((await (await get()).json()).servers).toHaveLength(8);
   await writeFile(file, 'secret-invalid-input');
   expect((await get()).status).toBe(503);
   const health = await fetch(`${base}/health`);

@@ -42,6 +42,9 @@ jobs:
           - id: fakturoid
             dockerfile: Dockerfile.connector
             build_args: CONNECTOR=fakturoid
+          - id: gemini-decisions
+            dockerfile: Dockerfile.connector
+            build_args: CONNECTOR=gemini-decisions
           - id: gemini-deep-research
             dockerfile: Dockerfile.connector
             build_args: CONNECTOR=gemini-deep-research
