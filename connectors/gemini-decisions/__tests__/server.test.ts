@@ -244,3 +244,69 @@ it('rejects a score with a substituted level label', async () => {
     isError: true,
   });
 });
+
+it.each(['validate', 'call'])(
+  'identifies a structured invalid key in %s without exposing diagnostics',
+  async (operation) => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        Response.json(
+          {
+            error: {
+              status: 'INVALID_ARGUMENT',
+              message: creds.apiKey,
+              details: [
+                {
+                  '@type': 'type.googleapis.com/google.rpc.ErrorInfo',
+                  reason: 'API_KEY_INVALID',
+                  domain: 'googleapis.com',
+                },
+              ],
+            },
+          },
+          { status: 400 },
+        ),
+      ),
+    );
+    const server = await setup();
+    const result =
+      operation === 'validate' ? await server.validate() : await server.callTool(tool, args);
+    expect(JSON.stringify(result)).toMatch(/HTTP 400.*rejected the API key/);
+    expect(JSON.stringify(result)).not.toContain(creds.apiKey);
+  },
+);
+
+it('stops reading an oversized 400 diagnostic and uses a redacted fallback', async () => {
+  let pulls = 0;
+  const cancel = vi.fn();
+  const body = new ReadableStream<Uint8Array>({
+    pull(controller) {
+      if (++pulls > 3) throw new Error('Unbounded error read');
+      controller.enqueue(new Uint8Array(32 * 1024));
+    },
+    cancel,
+  });
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(body, { status: 400 })));
+  const result = await (await setup()).callTool(tool, args);
+  expect(JSON.stringify(result)).toMatch(/HTTP 400/);
+  expect(cancel).toHaveBeenCalled();
+  expect(pulls).toBeLessThan(4);
+});
+
+it('keeps an invalid-key marker in arbitrary provider prose out of classification', async () => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn().mockResolvedValue(
+      Response.json(
+        {
+          error: { message: 'API_KEY_INVALID', details: [{ reason: 'API_KEY_INVALID' }] },
+        },
+        { status: 400 },
+      ),
+    ),
+  );
+  expect(JSON.stringify(await (await setup()).callTool(tool, args))).not.toMatch(
+    /rejected the API key/,
+  );
+});

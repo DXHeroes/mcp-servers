@@ -53,6 +53,6 @@ The external connector accepts **2 MiB for the entire MCP HTTP request**, includ
 
 ## Model and failures
 
-The connector calls `POST /v1beta/decisions` once per tool call. On 2026-11-28, the Developer API accepted the documented model `gemini-decision-1` and returned HTTP 404 for `gemini-decision-latest`. A call times out after 120 seconds or when its caller cancels. Errors identify HTTP status (including authentication and quota errors) and omit upstream response bodies. Check the project, key, permissions or quota before starting another billable call.
+The connector calls `POST /v1beta/decisions` once per tool call. On 2026-11-28, the Developer API accepted the documented model `gemini-decision-1` and returned HTTP 404 for `gemini-decision-latest`. A call times out after 120 seconds or when its caller cancels. A structured Google `API_KEY_INVALID` error identifies an invalid key even when Google uses HTTP 400. Errors identify HTTP status (including authentication and quota errors) and omit upstream response bodies. Check the project, key, permissions or quota before starting another billable call.
 
 [Google Decisions API reference](https://aistudio.google.com/docs/decisions-api)

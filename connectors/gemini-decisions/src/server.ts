@@ -13,7 +13,50 @@ const maxBytes = 2 * 1024 * 1024;
 function failure(text: string) {
   return { isError: true, content: [{ type: 'text', text }] };
 }
-function httpMessage(status: number) {
+// Only a small structured diagnostic is needed to distinguish Google's two HTTP 400 cases.
+async function invalidKeyResponse(response: Response): Promise<boolean> {
+  const reader = response.body?.getReader();
+  if (!reader) return false;
+  const limit = 16 * 1024;
+  let bytes = 0;
+  let text = '';
+  const decoder = new TextDecoder();
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      bytes += value.byteLength;
+      if (bytes > limit) {
+        await reader.cancel();
+        return false;
+      }
+      text += decoder.decode(value, { stream: true });
+    }
+    const details = JSON.parse(text + decoder.decode())?.error?.details;
+    return (
+      Array.isArray(details) &&
+      details.some(
+        (detail) =>
+          detail?.['@type'] === 'type.googleapis.com/google.rpc.ErrorInfo' &&
+          detail.domain === 'googleapis.com' &&
+          detail.reason === 'API_KEY_INVALID',
+      )
+    );
+  } catch {
+    return false;
+  } finally {
+    reader.releaseLock();
+  }
+}
+
+async function httpMessage(response: Response) {
+  const status = response.status;
+  if (status === 400) {
+    if (await invalidKeyResponse(response))
+      return 'Gemini Decisions HTTP 400. Google rejected the API key.';
+  } else {
+    await response.body?.cancel();
+  }
   const reason: Record<number, string> = {
     400: 'Google rejected the input or blocked it under its safety filters.',
     401: 'Google rejected the API key.',
@@ -59,8 +102,9 @@ export class GeminiDecisionsMcpServer extends McpServer {
         redirect: 'error',
         signal: AbortSignal.timeout(15000),
       });
+      if (!response.ok) return { valid: false, error: await httpMessage(response) };
       await response.body?.cancel();
-      return response.ok ? { valid: true } : { valid: false, error: httpMessage(response.status) };
+      return { valid: true };
     } catch {
       return { valid: false, error: 'Could not verify Gemini model access.' };
     }
@@ -88,8 +132,7 @@ export class GeminiDecisionsMcpServer extends McpServer {
         redirect: 'error',
       });
       if (!response.ok) {
-        await response.body?.cancel();
-        return failure(httpMessage(response.status));
+        return failure(await httpMessage(response));
       }
       const result = readResult(await response.json(), validated.data.questions);
       if (!result) return failure('Google returned an invalid Decisions response.');

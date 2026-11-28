@@ -7,7 +7,7 @@ export const mcpPackage: McpPackage = {
     id: 'gemini-decisions',
     name: 'Gemini Decisions',
     description: 'Evaluate named yes/no, choice and score questions over shared text and media.',
-    version: '0.1.0',
+    version: '0.1.1',
     author: 'DX Heroes',
     license: 'MIT',
     docsUrl: 'https://aistudio.google.com/docs/decisions-api',
