@@ -112,9 +112,9 @@ export class GeminiDeepResearchMcpServer extends McpServer {
     try {
       this.client = new GeminiClient(this.apiKeyConfig.apiKey);
       this.initError = null;
-    } catch (error) {
-      this.initError = `Failed to initialize Gemini client: ${error instanceof Error ? error.message : 'Unknown error'}`;
-      console.error('[GeminiDeepResearch] Initialization error:', error);
+    } catch {
+      this.initError = 'Failed to initialize Gemini client.';
+      console.error('[GeminiDeepResearch] Could not initialize the Gemini client.');
     }
   }
 
@@ -129,13 +129,9 @@ export class GeminiDeepResearchMcpServer extends McpServer {
 
     try {
       const client = new GeminiClient(this.apiKeyConfig.apiKey);
-      const result = await client.validateApiKey();
-      console.log('[GeminiDeepResearch] API key validation:', result);
-      return result;
+      return await client.validateApiKey();
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      console.error('[GeminiDeepResearch] Validation error:', errorMessage);
-      return { valid: false, error: `Validation failed: ${errorMessage}` };
+      return { valid: false, error: `Validation failed: ${classifyGeminiError(error).message}` };
     }
   }
 
@@ -352,11 +348,10 @@ export class GeminiDeepResearchMcpServer extends McpServer {
    */
   private handleApiError(error: unknown): unknown {
     const classified = classifyGeminiError(error);
-    return this.errorResponse(
-      classified.code,
-      classified.message,
-      classified.hint ? { hint: classified.hint } : undefined,
-    );
+    return this.errorResponse(classified.code, classified.message, {
+      status: classified.status,
+      hint: classified.hint,
+    });
   }
 
   /**

@@ -161,7 +161,7 @@ describe('classifyGeminiError', () => {
       // produces `RATE_LIMITED: "RATE_LIMITED: ..."` in the tool response.
       for (const message of ['429 Too Many Requests', '401 Unauthorized', 'ECONNREFUSED']) {
         const classified = classifyGeminiError(new Error(message));
-        expect(classified.message).toBe(message);
+        expect(classified.message).not.toContain(message);
         expect(classified.message.startsWith(`${classified.code}:`)).toBe(false);
       }
     });
