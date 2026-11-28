@@ -3,7 +3,7 @@
 import json, os, pathlib, subprocess, tempfile, time, urllib.request, urllib.error, uuid
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 BASE = 'node:22-alpine@sha256:c610fcdfb1d5b4740dd70c284ed3cb16bb857e0f7166196e36a5501df7a3aa32'
-IDS = ['abra-flexi', 'byzdata', 'fakturoid', 'gemini-deep-research', 'merk', 'postgres', 'toggl']
+IDS = ['abra-flexi', 'byzdata', 'fakturoid', 'gemini-decisions', 'gemini-deep-research', 'merk', 'postgres', 'toggl']
 PREFIX = 'mcp-smoke-' + uuid.uuid4().hex[:10]
 owned = []
 network = False
@@ -61,7 +61,7 @@ https.createServer({key:fs.readFileSync('/fixture/server.key'),cert:fs.readFileS
         negative="try{await fetch('https://api.track.toggl.com/api/v9/me');process.exit(2)}catch(e){if(!['UNABLE_TO_VERIFY_LEAF_SIGNATURE','SELF_SIGNED_CERT_IN_CHAIN'].includes(e.cause?.code))throw e}"
         docker(['run','--rm','--network',PREFIX,*common,BASE,'node','--input-type=module','--eval',negative])
         receipt['untrustedTlsRejected']=True
-        credentials={'abra-flexi':'https://203.0.113.10/c/fixture|fixture:synthetic','byzdata':'','fakturoid':'fixture:client:synthetic','gemini-deep-research':'synthetic-fixture','merk':'synthetic-fixture','toggl':'synthetic_tls_fixture'}
+        credentials={'abra-flexi':'https://203.0.113.10/c/fixture|fixture:synthetic','byzdata':'','fakturoid':'fixture:client:synthetic','gemini-decisions':'synthetic-fixture','gemini-deep-research':'synthetic-fixture','merk':'synthetic-fixture','toggl':'synthetic_tls_fixture'}
         password=os.environ['POSTGRES_TEST_PASSWORD']
         credentials['postgres']=f"host=host.docker.internal port={os.environ.get('POSTGRES_TEST_PORT','15434')} dbname=postgres user={os.environ.get('POSTGRES_TEST_USER','postgres')} password={password} sslmode=disable"
         for connector in IDS:
@@ -94,7 +94,7 @@ https.createServer({key:fs.readFileSync('/fixture/server.key'),cert:fs.readFileS
         docker(['run','-d','--name',name,*common,'-p','127.0.0.1::8080','--mount',f'type=bind,src={p},dst=/fixture,readonly','-e','MCP_CATALOG_MANIFEST=/fixture/manifest.json','-e','MCP_ACCESS_TOKEN=synthetic-catalog-token','-e','MCP_ALLOWED_HOSTS=127.0.0.1','mcp-task3b/catalog:test'])
         port=docker(['port',name,'8080/tcp']).rsplit(':',1)[1];ready(f'http://127.0.0.1:{port}/health')
         req=urllib.request.Request(f'http://127.0.0.1:{port}/catalog/v1/servers',headers={'Authorization':'Bearer synthetic-catalog-token'})
-        with urllib.request.urlopen(req) as response: assert len(json.load(response)['servers'])==7
+        with urllib.request.urlopen(req) as response: assert {entry['id'] for entry in json.load(response)['servers']} == set(IDS)
         updated=p/'next.json';updated.write_text('invalid');updated.replace(manifest)
         ready(f'http://127.0.0.1:{port}/health',503)
         try:urllib.request.urlopen(req);raise AssertionError('Invalid manifest accepted')

@@ -35,6 +35,9 @@
       "path": "./connectors/fakturoid"
     },
     {
+      "path": "./connectors/gemini-decisions"
+    },
+    {
       "path": "./connectors/gemini-deep-research"
     },
     {

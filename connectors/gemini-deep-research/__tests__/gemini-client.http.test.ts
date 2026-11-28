@@ -77,8 +77,17 @@ it('starts stored background research and returns report text and citations from
   ]);
 });
 
-it('answers a follow-up linked to an existing interaction with Gemini 3.8 Flash', async () => {
+const storedModel = () =>
+  Response.json({ id: 'stored-id', model: 'gemini-flash-latest', status: 'completed' });
+
+it('answers from the retrieved agent report in one model request', async () => {
   const requests = mockGemini(
+    Response.json({
+      id: 'stored-id',
+      agent: 'deep-research-preview-04-2026',
+      status: 'completed',
+      steps: [{ type: 'model_output', content: [{ type: 'text', text: 'Exact stored report.' }] }],
+    }),
     Response.json({
       id: 'followup-id',
       status: 'completed',
@@ -102,18 +111,71 @@ it('answers a follow-up linked to an existing interaction with Gemini 3.8 Flash'
     status: 'completed',
   });
   expect(requests.map((request) => [request.method, new URL(request.url).pathname])).toEqual([
+    ['GET', '/v1beta/interactions/stored-id'],
     ['POST', '/v1beta/interactions'],
   ]);
-  expect.soft(await requests[0]?.json()).toEqual({
-    model: 'gemini-3.8-flash',
-    input: 'Explain the first section.',
-    previous_interaction_id: 'stored-id',
+  const body = await requests[1]?.json();
+  expect(body).toMatchObject({
+    model: 'gemini-flash-latest',
+    input: [
+      { type: 'text', text: 'Exact stored report.' },
+      { type: 'text', text: 'Explain the first section.' },
+    ],
+    system_instruction: expect.stringContaining('source material'),
   });
-  expect(requests[0]?.headers.get('api-revision')).toBe('2026-05-20');
+  expect(body).not.toHaveProperty('previous_interaction_id');
+  expect(body).not.toHaveProperty('automatic_continuation');
+  expect(requests.map((request) => request.headers.get('api-revision'))).toEqual([
+    '2026-05-20',
+    '2026-05-20',
+  ]);
+});
+
+it('continues a stored model answer using its original ID', async () => {
+  const requests = mockGemini(
+    storedModel(),
+    Response.json({ id: 'next', status: 'completed', outputs: [{ type: 'text', text: 'Answer' }] }),
+  );
+  await new GeminiClient('fixture-key').followUp('stored-id', 'Elaborate.');
+  expect(await requests[1]?.json()).toMatchObject({
+    model: 'gemini-flash-latest',
+    previous_interaction_id: 'stored-id',
+    input: 'Elaborate.',
+  });
+  expect(requests.map((request) => request.method)).toEqual(['GET', 'POST']);
+});
+
+it.each([
+  { status: 'in_progress', agent: 'deep-research-preview-04-2026' },
+  {
+    status: 'completed',
+    agent: 'deep-research-preview-04-2026',
+    outputs: [{ type: 'text', text: '  ' }],
+  },
+  { status: 'completed' },
+])('rejects an unusable stored interaction before a paid call', async (previous) => {
+  const requests = mockGemini(Response.json({ id: 'stored-id', ...previous }));
+  await expect(
+    new GeminiClient('fixture-key').followUp('stored-id', 'Elaborate.'),
+  ).rejects.toMatchObject({ code: 'API_ERROR' });
+  expect(requests.map((request) => request.method)).toEqual(['GET']);
+});
+
+it('propagates a retrieval error without creating a model interaction', async () => {
+  const requests = mockGemini(
+    Response.json(
+      { error: { code: 403, status: 'PERMISSION_DENIED', message: 'Permission denied' } },
+      { status: 403 },
+    ),
+  );
+  const result = new GeminiClient('fixture-key').followUp('stored-id', 'Explain.');
+  await expect(result.catch(classifyGeminiError)).resolves.toMatchObject({ status: 403 });
+  expect(requests.map((request) => request.method)).toEqual(['GET']);
 });
 
 it('surfaces a provider rate limit without retrying a billable follow-up', async () => {
   const requests = mockGemini(
+    storedModel(),
     Response.json(
       { error: { code: 429, status: 'RESOURCE_EXHAUSTED', message: 'Fixture quota exceeded' } },
       { status: 429 },
@@ -129,11 +191,12 @@ it('surfaces a provider rate limit without retrying a billable follow-up', async
     code: 'RATE_LIMITED',
     status: 429,
   });
-  expect(requests).toHaveLength(1);
+  expect(requests.map((request) => request.method)).toEqual(['GET', 'POST']);
 });
 
 it('reports a follow-up that requires continuation without submitting another paid request', async () => {
   const requests = mockGemini(
+    storedModel(),
     Response.json({
       id: 'followup-id',
       status: 'requires_continuation',
@@ -154,7 +217,7 @@ it('reports a follow-up that requires continuation without submitting another pa
       code: 'API_ERROR',
       message: 'Gemini follow-up did not complete.',
     });
-  expect(requests).toHaveLength(1);
+  expect(requests.map((request) => request.method)).toEqual(['GET', 'POST']);
 });
 
 it('reads an older interaction completed with legacy outputs', async () => {

@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
@@ -46,4 +46,12 @@ test('Google connector release uses its independent version and image without np
     build_args: 'CONNECTOR=google',
   });
   await assert.rejects(() => releaseTarget('google-v0.2.0'));
+});
+
+test('the root build includes every standalone connector project', async () => {
+  const config = JSON.parse(await readFile(new URL('../tsconfig.json', import.meta.url), 'utf8'));
+  const projects = config.references.map(({ path }) => path);
+  for (const id of await connectorIds()) {
+    assert.ok(projects.includes(`./connectors/${id}`), `Missing build reference for ${id}`);
+  }
 });

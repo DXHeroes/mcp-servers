@@ -23,7 +23,7 @@ export const mcpPackage: McpPackage = {
       "Conducts comprehensive AI-powered research using Google's Deep Research Agent. " +
       'Autonomously searches the web, reads multiple sources, and synthesizes findings into ' +
       'detailed, cited reports. Tasks take 5-20 minutes. Google estimates $1-3 for a typical task.',
-    version: '0.1.1',
+    version: '0.1.2',
     author: 'DX Heroes',
     license: 'MIT',
     requiresApiKey: true,
